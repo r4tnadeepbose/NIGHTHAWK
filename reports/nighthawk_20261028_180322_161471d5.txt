@@ -1,0 +1,4 @@
+192.168.111.130:21/tcp open syn-ack ftp 
+192.168.111.130:22/tcp open syn-ack ssh 
+192.168.111.130:23/tcp open syn-ack telnet 
+192.168.111.130:25/tcp open syn-ack smtp 

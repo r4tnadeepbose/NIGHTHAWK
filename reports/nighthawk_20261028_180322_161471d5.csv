@@ -1,0 +1,5 @@
+host,protocol,port,state,reason,service
+192.168.111.130,tcp,21,open,syn-ack,ftp
+192.168.111.130,tcp,22,open,syn-ack,ssh
+192.168.111.130,tcp,23,open,syn-ack,telnet
+192.168.111.130,tcp,25,open,syn-ack,smtp

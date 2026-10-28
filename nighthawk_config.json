@@ -1,9 +1,10 @@
 {
   "target": "192.168.111.130",
-  "ports": "1-100",
-  "scan_type": "TCP Connect",
+  "ports": "1-50",
+  "scan_type": "IP Protocol",
   "service": true,
   "os": true,
   "extra_flags": "--reason",
-  "auto_open": true
+  "auto_open": true,
+  "timing": "Normal (T3)"
 }

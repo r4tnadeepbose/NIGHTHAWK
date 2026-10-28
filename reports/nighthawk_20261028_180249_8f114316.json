@@ -1,0 +1,64 @@
+{
+  "target": "192.168.111.130",
+  "ports": "1-50",
+  "info": {
+    "os": "Linux 2.6.9 - 2.6.33",
+    "mac": "00:0C:29:FA:DD:2A",
+    "vendor": "VMware",
+    "device": "general purpose",
+    "uptime": "7931s",
+    "distance": "1 hops",
+    "service_info": "Unknown"
+  },
+  "created": "2026-10-28T18:02:49.799801",
+  "results": [
+    {
+      "host": "192.168.111.130",
+      "protocol": "tcp",
+      "port": 21,
+      "state": "open",
+      "reason": "syn-ack",
+      "service": "ftp",
+      "version": "2.3.4",
+      "product": "vsftpd",
+      "extrainfo": "",
+      "scripts": []
+    },
+    {
+      "host": "192.168.111.130",
+      "protocol": "tcp",
+      "port": 22,
+      "state": "open",
+      "reason": "syn-ack",
+      "service": "ssh",
+      "version": "4.7p1 Debian 8ubuntu1",
+      "product": "OpenSSH",
+      "extrainfo": "protocol 2.0",
+      "scripts": []
+    },
+    {
+      "host": "192.168.111.130",
+      "protocol": "tcp",
+      "port": 23,
+      "state": "open",
+      "reason": "syn-ack",
+      "service": "telnet",
+      "version": "",
+      "product": "Linux telnetd",
+      "extrainfo": "",
+      "scripts": []
+    },
+    {
+      "host": "192.168.111.130",
+      "protocol": "tcp",
+      "port": 25,
+      "state": "open",
+      "reason": "syn-ack",
+      "service": "smtp",
+      "version": "",
+      "product": "Postfix smtpd",
+      "extrainfo": "",
+      "scripts": []
+    }
+  ]
+}

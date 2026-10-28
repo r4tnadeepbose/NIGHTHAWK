@@ -1,0 +1,172 @@
+{
+  "target": "192.168.111.130",
+  "ports": "1-50",
+  "info": {
+    "os": "Unknown",
+    "mac": "00:0C:29:FA:DD:2A",
+    "vendor": "VMware",
+    "device": "Unknown",
+    "uptime": "Unknown",
+    "distance": "Unknown",
+    "service_info": "Unknown"
+  },
+  "created": "2026-10-28T18:04:02.443432",
+  "results": [
+    {
+      "host": "192.168.111.130",
+      "protocol": "ip",
+      "port": 1,
+      "state": "open",
+      "reason": "echo-reply",
+      "service": "icmp",
+      "version": "",
+      "product": "",
+      "extrainfo": "",
+      "scripts": []
+    },
+    {
+      "host": "192.168.111.130",
+      "protocol": "ip",
+      "port": 2,
+      "state": "open|filtered",
+      "reason": "no-response",
+      "service": "igmp",
+      "version": "",
+      "product": "",
+      "extrainfo": "",
+      "scripts": []
+    },
+    {
+      "host": "192.168.111.130",
+      "protocol": "ip",
+      "port": 4,
+      "state": "open|filtered",
+      "reason": "no-response",
+      "service": "ipv4",
+      "version": "",
+      "product": "",
+      "extrainfo": "",
+      "scripts": []
+    },
+    {
+      "host": "192.168.111.130",
+      "protocol": "ip",
+      "port": 6,
+      "state": "open",
+      "reason": "proto-response",
+      "service": "tcp",
+      "version": "",
+      "product": "",
+      "extrainfo": "",
+      "scripts": []
+    },
+    {
+      "host": "192.168.111.130",
+      "protocol": "ip",
+      "port": 8,
+      "state": "open|filtered",
+      "reason": "no-response",
+      "service": "egp",
+      "version": "",
+      "product": "",
+      "extrainfo": "",
+      "scripts": []
+    },
+    {
+      "host": "192.168.111.130",
+      "protocol": "ip",
+      "port": 13,
+      "state": "open|filtered",
+      "reason": "no-response",
+      "service": "argus",
+      "version": "",
+      "product": "",
+      "extrainfo": "",
+      "scripts": []
+    },
+    {
+      "host": "192.168.111.130",
+      "protocol": "ip",
+      "port": 16,
+      "state": "open|filtered",
+      "reason": "no-response",
+      "service": "chaos",
+      "version": "",
+      "product": "",
+      "extrainfo": "",
+      "scripts": []
+    },
+    {
+      "host": "192.168.111.130",
+      "protocol": "ip",
+      "port": 17,
+      "state": "open",
+      "reason": "port-unreach",
+      "service": "udp",
+      "version": "",
+      "product": "",
+      "extrainfo": "",
+      "scripts": []
+    },
+    {
+      "host": "192.168.111.130",
+      "protocol": "ip",
+      "port": 22,
+      "state": "open|filtered",
+      "reason": "no-response",
+      "service": "xns-idp",
+      "version": "",
+      "product": "",
+      "extrainfo": "",
+      "scripts": []
+    },
+    {
+      "host": "192.168.111.130",
+      "protocol": "ip",
+      "port": 23,
+      "state": "open|filtered",
+      "reason": "no-response",
+      "service": "trunk-1",
+      "version": "",
+      "product": "",
+      "extrainfo": "",
+      "scripts": []
+    },
+    {
+      "host": "192.168.111.130",
+      "protocol": "ip",
+      "port": 39,
+      "state": "open|filtered",
+      "reason": "no-response",
+      "service": "tp++",
+      "version": "",
+      "product": "",
+      "extrainfo": "",
+      "scripts": []
+    },
+    {
+      "host": "192.168.111.130",
+      "protocol": "ip",
+      "port": 41,
+      "state": "open|filtered",
+      "reason": "no-response",
+      "service": "ipv6",
+      "version": "",
+      "product": "",
+      "extrainfo": "",
+      "scripts": []
+    },
+    {
+      "host": "192.168.111.130",
+      "protocol": "ip",
+      "port": 48,
+      "state": "open|filtered",
+      "reason": "no-response",
+      "service": "dsp",
+      "version": "",
+      "product": "",
+      "extrainfo": "",
+      "scripts": []
+    }
+  ]
+}
