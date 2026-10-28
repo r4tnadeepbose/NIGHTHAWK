@@ -1,4 +1,4 @@
-# NIGHTHAWK
+# NIGHTHAWK 2.0.0
 
 NIGHTHAWK is a desktop Nmap scanner with a Version 2 security dashboard. It provides scan controls, live output, risk assessment, and browser reports without Python package dependencies.
 

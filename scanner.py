@@ -1173,7 +1173,7 @@ document.getElementById("filter").addEventListener("input", function () {{
     # scan and report pipeline remains intact; only the Tkinter presentation is
     # replaced.
     def build_ui(self):
-        self.root.title("NIGHTHAWK v2 — Advanced Network Scanner")
+        self.root.title("NIGHTHAWK 2.0.0 — Advanced Network Scanner")
         self.root.geometry("1530x960")
         self.root.minsize(1180, 760)
         self.root.configure(bg="#020b16")
@@ -1232,10 +1232,10 @@ document.getElementById("filter").addEventListener("input", function () {{
         content.grid_columnconfigure(0, weight=1)
         self._build_v2_content(content)
 
-        self._apply_v1_palette()
+        self._apply_v2_palette()
         self.scan_type_changed(self.scan_type.get())
 
-    def _apply_v1_palette(self):
+    def _apply_v2_palette(self):
         """Apply a restrained SOC-dashboard palette to the Version 2 layout."""
         colors = {
             "#020b16": self.BG, "#030d18": "#101010", "#05111f": self.PANEL,
@@ -1557,7 +1557,7 @@ document.getElementById("filter").addEventListener("input", function () {{
         messagebox.showinfo("Settings", "Scan settings are available in the left configuration panel.")
 
     def show_about(self):
-        messagebox.showinfo("About NIGHTHAWK", "NIGHTHAWK v2\nAdvanced Network Scanner\n\nOnly scan hosts you own or have permission to test.")
+        messagebox.showinfo("About NIGHTHAWK", "NIGHTHAWK 2.0.0\nAdvanced Network Scanner\n\nOnly scan hosts you own or have permission to test.")
 
     def _dashboard_report_page(self, data, base):
         """Create a standalone browser report using the same dashboard language as the app."""
@@ -1599,7 +1599,7 @@ document.getElementById("filter").addEventListener("input", function () {{
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NIGHTHAWK — Scan report</title>
+<title>NIGHTHAWK 2.0.0 — Scan report</title>
 <style>
 :root {{ color-scheme: dark; --bg:#000000; --panel:#171717; --panel-2:#202020; --line:#353535; --text:#f5f7fa; --muted:#a6adb8; --primary:#3595F9; --green:#27AE60; --yellow:#FEDD0B; --orange:#F2994A; --red:#E05263; --maroon:#7A1E30; }}
 * {{ box-sizing:border-box; }} body {{ margin:0; background:var(--bg); color:var(--text); font:14px/1.45 "Segoe UI",system-ui,sans-serif; }}
@@ -1620,7 +1620,7 @@ table {{ width:100%; border-collapse:collapse; }} th,td {{ padding:10px 14px; te
 </style>
 </head>
 <body>
-<header class="topbar"><div class="mark"><img src="../logo.png" alt="Nighthawk"></div><div class="brand">NIGHTHAWK<small>ADVANCED NETWORK SCANNER</small></div><div class="status">SCAN COMPLETE</div></header>
+<header class="topbar"><div class="mark"><img src="../logo.png" alt="Nighthawk"></div><div class="brand">NIGHTHAWK<small>ADVANCED NETWORK SCANNER · VERSION 2.0</small></div><div class="status">SCAN COMPLETE</div></header>
 <main>
 <h1>Scan report</h1><p class="sub">Target: {html.escape(str(data.get('target', 'Unknown')))} &nbsp;•&nbsp; Ports: {html.escape(str(data.get('ports', '')))} &nbsp;•&nbsp; {html.escape(str(data.get('created', '')).replace('T', ' ')[:19])}</p>
 <section class="summary"><div class="card good"><span>Hosts up</span><strong>1</strong></div><div class="card"><span>Open ports</span><strong>{len(open_ports)}</strong></div><div class="card {'bad' if assessment['css'] in ('risk-critical', 'risk-high') else 'warn'}"><span>Script findings</span><strong>{len(scripts)}</strong></div><div class="card"><span>Ports scanned</span><strong>{html.escape(str(data.get('ports', '—')))}</strong></div></section>
@@ -1746,10 +1746,10 @@ document.getElementById('filter').addEventListener('input', function() {{ const 
 
 if __name__ == "__main__":
     if "--help" in sys.argv[1:] or "-h" in sys.argv[1:]:
-        print("""NIGHTHAWK 1.0.0 - Advanced Network Scanner\n\nUsage: ./scanner.py [OPTIONS]\n\nOptions:\n  -h, --help       Show this help message and exit\n  -V, --version    Show version information and exit\n\nRequirements:\n  Python 3.9 or newer with Tkinter, and Nmap on PATH.\n  Run ./requirements.txt to check or install Linux prerequisites.\n\nReports:\n  Completed scans are written to ./reports/ as HTML, JSON, CSV, and TXT files.\n\nOnly scan hosts you own or have permission to test.""")
+        print("""NIGHTHAWK 2.0.0 - Advanced Network Scanner\n\nUsage: ./scanner.py [OPTIONS]\n\nOptions:\n  -h, --help       Show this help message and exit\n  -V, --version    Show version information and exit\n\nRequirements:\n  Python 3.9 or newer with Tkinter, and Nmap on PATH.\n  Run ./requirements.txt to check or install Linux prerequisites.\n\nReports:\n  Completed scans are written to ./reports/ as HTML, JSON, CSV, and TXT files.\n\nOnly scan hosts you own or have permission to test.""")
         sys.exit(0)
     if "--version" in sys.argv[1:] or "-V" in sys.argv[1:]:
-        print("NIGHTHAWK 1.0.0")
+        print("NIGHTHAWK 2.0.0")
         sys.exit(0)
     root = tk.Tk()
     NighthawkApp(root)
