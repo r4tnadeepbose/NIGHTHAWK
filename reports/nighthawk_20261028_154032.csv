@@ -1,5 +1,0 @@
-host,protocol,port,state,reason,service,version
-192.168.1.5,tcp,135,open,syn-ack,msrpc,
-192.168.1.5,tcp,137,filtered,admin-prohibited,netbios-ns,
-192.168.1.5,tcp,139,open,syn-ack,netbios-ssn,
-192.168.1.5,tcp,445,open,syn-ack,microsoft-ds,
