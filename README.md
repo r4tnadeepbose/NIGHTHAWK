@@ -1,6 +1,4 @@
-Here is the updated **README.md** that accurately reflects all the changes we've made (the custom HTML report buttons, the hidden Nmap banner, the UI rebranding, and the new usage instructions).
 
-```markdown
 # NIGHTHAWK
 
 **Advanced Network Scanner — a terminal-style GUI front end for Nmap**
@@ -378,4 +376,3 @@ Add your chosen license before publishing. MIT is a common choice for small open
 ## Disclaimer
 
 NIGHTHAWK is a front end for Nmap. The author is not responsible for misuse, damage, service interruption, or unauthorized activity. Always obtain written permission before scanning any target you do not own.
-```
