@@ -1,0 +1,4 @@
+192.168.1.5:135/tcp open msrpc 
+192.168.1.5:137/tcp filtered netbios-ns 
+192.168.1.5:139/tcp open netbios-ssn 
+192.168.1.5:445/tcp open microsoft-ds 

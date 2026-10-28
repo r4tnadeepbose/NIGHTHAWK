@@ -1,0 +1,43 @@
+{
+  "target": "192.168.1.5",
+  "ports": "1-1024",
+  "created": "2026-10-28T15:50:06.958302",
+  "results": [
+    {
+      "host": "192.168.1.5",
+      "protocol": "tcp",
+      "port": 135,
+      "state": "open",
+      "reason": "syn-ack",
+      "service": "msrpc",
+      "version": ""
+    },
+    {
+      "host": "192.168.1.5",
+      "protocol": "tcp",
+      "port": 137,
+      "state": "filtered",
+      "reason": "admin-prohibited",
+      "service": "netbios-ns",
+      "version": ""
+    },
+    {
+      "host": "192.168.1.5",
+      "protocol": "tcp",
+      "port": 139,
+      "state": "open",
+      "reason": "syn-ack",
+      "service": "netbios-ssn",
+      "version": ""
+    },
+    {
+      "host": "192.168.1.5",
+      "protocol": "tcp",
+      "port": 445,
+      "state": "open",
+      "reason": "syn-ack",
+      "service": "microsoft-ds",
+      "version": ""
+    }
+  ]
+}

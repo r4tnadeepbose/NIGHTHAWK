@@ -17,15 +17,18 @@ Created by [Ratnadeep Bose](https://github.com/R4tnadeepBose).
 - TCP SYN scan.
 - UDP scan.
 - FIN, Xmas, NULL, and ACK scans.
+- Window, Maimon, Ping Discovery, and IP Protocol scans.
 - Service and version detection.
 - Optional OS detection.
-- Custom Nmap options.
-- Custom start and end port range.
+- Custom scan mode with custom flags.
+- Single ports, ranges, and comma-separated port lists.
 - Aggressive Nmap timing profile (`-T5`).
 - Live command output.
 - Visible **COMMAND RUN** field.
 - Animated loading bar while a scan is running.
 - Abort button to stop a running scan.
+- Hover question-mark help for each control.
+- Automatic HTML, JSON, CSV, and TXT reports.
 - Responsive interface while Nmap is working.
 
 ## How It Works
@@ -36,15 +39,16 @@ settings selected in the interface and starts Nmap as a separate process.
 
 The scan flow is:
 
-1. You enter a target and port range.
+1. You enter a target and a port expression.
 2. NIGHTHAWK validates the target, port values, and extra options.
 3. The selected scan type is converted to an Nmap flag.
 4. NIGHTHAWK adds the selected detection options and aggressive timing mode.
 5. The complete command is shown in **COMMAND RUN**.
 6. Nmap performs the scan using its optimized networking engine.
 7. Nmap output is streamed into the NIGHTHAWK terminal window in real time.
-8. The loading bar runs while the Nmap process is active.
-9. **ABORT** terminates the Nmap process when you stop the scan.
+8. The loading bar runs while the scanner process is active.
+9. XML scan data is converted into portable reports.
+10. **ABORT** terminates the scanner process when you stop the scan.
 
 For example, these settings:
 
@@ -196,13 +200,12 @@ python3 -c "import tkinter; print('Tkinter OK')"
 Clone the repository:
 
 ```bash
-git clone https://github.com/R4tnadeepBose/YOUR-REPOSITORY-NAME.git
-cd YOUR-REPOSITORY-NAME
+git clone https://github.com/r4tnadeepbose/NIGHTHAWK.git
+cd NIGHTHAWK
 ```
 
-Replace `YOUR-REPOSITORY-NAME` with the actual GitHub repository name. You can
-also download the repository as a ZIP file from
-[your GitHub profile](https://github.com/R4tnadeepBose) and extract it.
+You can also download the repository as a ZIP file from
+[NIGHTHAWK on GitHub](https://github.com/r4tnadeepbose/NIGHTHAWK) and extract it.
 
 ## Run NIGHTHAWK on Windows
 
@@ -244,14 +247,18 @@ project directory is enough.
 ## Using the Application
 
 1. Enter a hostname or IP address in **TARGET**.
-2. Enter the first and last ports in **PORT RANGE**.
+2. Enter one port, a range, or a comma-separated list in **PORTS**:
+   `443`, `1-1024`, or `22,80,443`.
 3. Select a scan type.
 4. Enable **SERVICE / VERSION DETECTION** if required.
 5. Enable **OS DETECTION** when appropriate.
-6. Add optional Nmap arguments in **EXTRA OPTIONS**.
+6. Add optional flags in **EXTRA FLAGS**. Select **Custom** to hide the normal
+   scan controls and enter a complete custom flag string in **CUSTOM COMMAND**.
 7. Click **LAUNCH SCAN**.
 8. Review the exact command in **COMMAND RUN** and the live output below it.
 9. Click **ABORT** to stop the scan.
+10. When complete, the HTML report opens in your browser. Reports are saved in
+    the `reports` folder beside `scanner.py`.
 
 For a safe local test, use:
 
@@ -260,6 +267,21 @@ Target: 127.0.0.1
 Ports: 1 - 1024
 Scan type: TCP Connect
 ```
+
+### Reports
+
+Each completed scan creates four files with the same timestamp:
+
+```text
+reports/
+├── nighthawk_YYYYMMDD_HHMMSS.html
+├── nighthawk_YYYYMMDD_HHMMSS.json
+├── nighthawk_YYYYMMDD_HHMMSS.csv
+└── nighthawk_YYYYMMDD_HHMMSS.txt
+```
+
+The HTML report opens automatically. The report buttons in the application
+open the latest HTML, JSON, CSV, and TXT files.
 
 ## Example Commands
 
