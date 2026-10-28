@@ -45,9 +45,16 @@ nighthawk        # after installation
 
 ## Windows
 
-1. Install Python 3.9+ from [python.org](https://www.python.org/downloads/) and select **Add Python to PATH**.
-2. Install Nmap from [nmap.org/download](https://nmap.org/download.html) and allow its installer to add Nmap to `PATH`.
-3. Open PowerShell in the project folder and run:
+1. Download the project ZIP from [GitHub](https://github.com/r4tnadeepbose/NIGHTHAWK/archive/refs/heads/main.zip), then extract it (for example, to `Downloads\NIGHTHAWK-main`).
+2. Install Python 3.9+ from [python.org](https://www.python.org/downloads/) and select **Add Python to PATH**.
+3. Install Nmap from [nmap.org/download](https://nmap.org/download.html) and allow its installer to add Nmap to `PATH`.
+4. Open PowerShell in the extracted folder:
+
+```powershell
+cd "$HOME\Downloads\NIGHTHAWK-main"
+```
+
+5. Start NIGHTHAWK:
 
 ```powershell
 py .\scanner.py
