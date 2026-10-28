@@ -164,6 +164,8 @@ class NighthawkApp:
         self.output.pack(fill=tk.BOTH, expand=True, padx=16, pady=(4, 10))
         reports = tk.Frame(self.root, bg=self.BG, padx=16, pady=4)
         reports.pack(fill=tk.X)
+        
+        # Fixed button widths so they don't clip text
         self.open_report_btn = self.button(reports, "OPEN HTML REPORT", self.open_report, "#19364a", self.ACCENT)
         self.open_report_btn.config(state=tk.DISABLED)
         self.open_report_btn.pack(side=tk.LEFT)
@@ -227,10 +229,12 @@ class NighthawkApp:
         menu["menu"].config(bg="#192936", fg=self.FG)
 
     def button(self, parent, text, command, background, foreground):
+        # Auto-calculate width to fit the text perfectly without clipping
+        width = len(text) + 4
         return tk.Button(parent, text=text, command=command, bg=background, fg=foreground,
                          activebackground="#28536a", activeforeground="white",
                          font=("Consolas", 9, "bold"), relief=tk.FLAT,
-                         width=20 if "LAUNCH" in text else 9, padx=12, pady=7)
+                         width=width, padx=6, pady=7)
 
     def log(self, text):
         self.output.config(state=tk.NORMAL)
@@ -416,7 +420,6 @@ class NighthawkApp:
         
         rows = "".join("<tr>" + "".join(f"<td>{html.escape(str(r[key]))}</td>" for key in ("host", "protocol", "port", "state", "service", "version")) + "</tr>" for r in records)
         
-        # Generates the HTML with embedded download buttons mimicking the desktop UI
         page = f"""<!doctype html>
 <html lang="en">
 <head>
