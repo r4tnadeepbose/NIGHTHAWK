@@ -1,0 +1,70 @@
+.TH NIGHTHAWK 1 "October 2026" "NIGHTHAWK 1.0.0" "User Commands"
+.SH NAME
+nighthawk \- graphical Nmap front end
+.SH SYNOPSIS
+.B nighthawk
+.RI [ --help | -h ]
+.RI [ --version | -V ]
+.br
+.B ./scanner.py
+.RI [ --help | -h ]
+.RI [ --version | -V ]
+.SH DESCRIPTION
+NIGHTHAWK is a Tkinter graphical interface for Nmap. It builds validated Nmap commands, streams scan output, and creates HTML, JSON, CSV, and text reports.
+.SH OPTIONS
+.TP
+.BR -h , " --help"
+Print usage, requirements, and report location, then exit.
+.TP
+.BR -V , " --version"
+Print the NIGHTHAWK version, then exit.
+.SH REQUIREMENTS
+Python 3.9 or newer with Tkinter and Nmap on PATH are required. Run
+.B ./requirements.txt
+to check prerequisites. On Kali or another apt-based system, run
+.B sudo ./requirements.txt
+to install missing packages.
+.SH USAGE
+Run ordinary scans as a regular user:
+.PP
+.B ./scanner.py
+.PP
+For authorized scan modes requiring raw-packet privileges, preserve the display environment:
+.PP
+.B sudo -E ./scanner.py
+.SH FILES
+.TP
+.I ./reports/nighthawk_YYYYMMDD_HHMMSS_<id>.{html,json,csv,txt}
+Generated reports.
+.TP
+.I ./scanner.py
+The graphical application.
+.TP
+.I ./requirements.txt
+Prerequisite checker and installer.
+.SH EXAMPLES
+.TP
+.B nighthawk --help
+Show command-line help.
+.TP
+.B ./requirements.txt
+Check Python, Tkinter, and Nmap.
+.TP
+.B sudo -E ./scanner.py
+Start the GUI for authorized privileged scans.
+.SH PRIVILEGES
+TCP Connect and most ping discovery scans work as a regular user. TCP SYN, UDP, FIN, Xmas, NULL, ACK, Window, Maimon, OS detection, fragmentation, decoys, bad-checksum, and idle scans commonly require root or raw-packet privileges.
+.SH TROUBLESHOOTING
+If Nmap is not found, install it and confirm
+.B nmap --version .
+If Tkinter cannot be imported, install the distribution's Tkinter package, such as
+.B python3-tk
+on Kali. If the GUI cannot open through sudo, use
+.B sudo -E
+from a graphical terminal.
+.SH SEE ALSO
+.BR nmap (1)
+.SH DISCLAIMER
+Only scan hosts you own or have permission to test.
+.SH AUTHOR
+Ratnadeep Bose.

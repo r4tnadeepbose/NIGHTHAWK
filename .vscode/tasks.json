@@ -1,0 +1,63 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "NIGHTHAWK: Run",
+      "type": "shell",
+      "command": "./scanner.py",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "NIGHTHAWK: Run as root",
+      "type": "shell",
+      "command": "sudo -E ./scanner.py",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "NIGHTHAWK: Check requirements",
+      "type": "shell",
+      "command": "./requirements.txt",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "NIGHTHAWK: Help",
+      "type": "shell",
+      "command": "./scanner.py --help",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "NIGHTHAWK: Version",
+      "type": "shell",
+      "command": "./scanner.py --version",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "NIGHTHAWK: Preview man page",
+      "type": "shell",
+      "command": "man -l nighthawk.1",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

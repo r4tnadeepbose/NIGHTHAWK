@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import csv
 import datetime
 import html
@@ -7,6 +8,7 @@ import re
 import shlex
 import shutil
 import subprocess
+import sys
 import tempfile
 import threading
 import tkinter as tk
@@ -1161,6 +1163,12 @@ document.getElementById("filter").addEventListener("input", function () {{
 
 
 if __name__ == "__main__":
+    if "--help" in sys.argv[1:] or "-h" in sys.argv[1:]:
+        print("""NIGHTHAWK 1.0.0 - Advanced Network Scanner\n\nUsage: ./scanner.py [OPTIONS]\n\nOptions:\n  -h, --help       Show this help message and exit\n  -V, --version    Show version information and exit\n\nRequirements:\n  Python 3.9 or newer with Tkinter, and Nmap on PATH.\n  Run ./requirements.txt to check or install Linux prerequisites.\n\nReports:\n  Completed scans are written to ./reports/ as HTML, JSON, CSV, and TXT files.\n\nOnly scan hosts you own or have permission to test.""")
+        sys.exit(0)
+    if "--version" in sys.argv[1:] or "-V" in sys.argv[1:]:
+        print("NIGHTHAWK 1.0.0")
+        sys.exit(0)
     root = tk.Tk()
     NighthawkApp(root)
     root.mainloop()
