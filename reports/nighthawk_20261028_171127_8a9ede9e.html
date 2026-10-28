@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NIGHTHAWK Report</title>
+<style>
+body { background:#091017; color:#b8f7d4; font:15px Consolas,monospace; padding:30px }
+h1 { color:#20e08a; margin-bottom: 5px; }
+.controls { margin: 20px 0; display: flex; gap: 10px; flex-wrap: wrap; }
+input { background:#111e29; border:1px solid #28536a; color:#b8f7d4; padding:10px; width: min(520px, 100%); flex-grow: 1; }
+button { background:#19364a; color:#20e08a; border:none; padding:10px 20px; font-family:Consolas,monospace; font-weight:bold; cursor:pointer; transition: 0.2s; }
+button:hover { background:#28536a; }
+table { border-collapse:collapse; width:100%; margin-top:10px; } 
+td,th { border:1px solid #28536a; padding:8px; text-align:left; } 
+th { color:#20e08a; } 
+tr:nth-child(even) { background:#111e29 }
+@media print {
+  body { background: #fff; color: #000; }
+  button, input { display: none; }
+  table, th, td { border-color: #000; color: #000; }
+  th { color: #000; }
+}
+</style>
+</head>
+<body>
+<h1>NIGHTHAWK // Scan Report</h1>
+<p>Target: 192.168.111.130 | Ports: 100</p>
+
+<div class="controls">
+  <button onclick="window.print()">SAVE AS PDF</button>
+  <button onclick="downloadFile('json')">EXPORT JSON</button>
+  <button onclick="downloadFile('csv')">EXPORT CSV</button>
+  <button onclick="downloadFile('txt')">EXPORT TXT</button>
+  <input id="filter" type="search" placeholder="Filter host, port, state, or service...">
+</div>
+
+<table id="results">
+<thead><tr><th>Host</th><th>Protocol</th><th>Port</th><th>State</th><th>Service</th><th>Version</th></tr></thead>
+<tbody><tr><td>192.168.111.130</td><td>tcp</td><td>100</td><td>closed</td><td>newacct</td><td></td></tr></tbody>
+</table>
+
+<script>
+const reportData = {
+  json: {"target": "192.168.111.130", "ports": "100", "created": "2026-10-28T17:11:27.437892", "results": [{"host": "192.168.111.130", "protocol": "tcp", "port": 100, "state": "closed", "reason": "conn-refused", "service": "newacct", "version": ""}]},
+  csv: "host,protocol,port,state,reason,service,version\n192.168.111.130,tcp,100,closed,conn-refused,newacct,\n",
+  txt: "192.168.111.130:100/tcp closed newacct "
+};
+
+function downloadFile(ext) {
+  const blob = new Blob([reportData[ext]], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'nighthawk_20261028_171127_8a9ede9e.' + ext;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById("filter").addEventListener("input", function () {
+  const query = this.value.toLowerCase();
+  document.querySelectorAll("#results tbody tr").forEach(function (row) {
+    row.hidden = !row.textContent.toLowerCase().includes(query);
+  });
+});
+</script>
+</body>
+</html>

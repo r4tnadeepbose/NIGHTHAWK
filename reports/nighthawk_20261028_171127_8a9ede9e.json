@@ -1,0 +1,16 @@
+{
+  "target": "192.168.111.130",
+  "ports": "100",
+  "created": "2026-10-28T17:11:27.437892",
+  "results": [
+    {
+      "host": "192.168.111.130",
+      "protocol": "tcp",
+      "port": 100,
+      "state": "closed",
+      "reason": "conn-refused",
+      "service": "newacct",
+      "version": ""
+    }
+  ]
+}

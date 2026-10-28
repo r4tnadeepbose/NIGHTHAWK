@@ -1,0 +1,6 @@
+192.168.111.130:21/tcp open ftp 2.3.4
+192.168.111.130:22/tcp open ssh 4.7p1 Debian 8ubuntu1
+192.168.111.130:23/tcp open telnet 
+192.168.111.130:25/tcp open smtp 
+192.168.111.130:53/tcp open domain 9.4.2
+192.168.111.130:80/tcp open http 2.2.8
