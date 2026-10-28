@@ -1,7 +1,0 @@
-host,protocol,port,state,reason,service,version,product,extrainfo
-192.168.111.130,tcp,21,open,syn-ack,ftp,2.3.4,vsftpd,
-192.168.111.130,tcp,22,open,syn-ack,ssh,4.7p1 Debian 8ubuntu1,OpenSSH,protocol 2.0
-192.168.111.130,tcp,23,open,syn-ack,telnet,,Linux telnetd,
-192.168.111.130,tcp,25,open,syn-ack,smtp,,Postfix smtpd,
-192.168.111.130,tcp,53,open,syn-ack,domain,9.4.2,ISC BIND,
-192.168.111.130,tcp,80,open,syn-ack,http,2.2.8,Apache httpd,(Ubuntu) DAV/2
