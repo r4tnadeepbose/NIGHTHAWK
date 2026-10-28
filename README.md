@@ -1,12 +1,15 @@
+Here is the updated **README.md** that accurately reflects all the changes we've made (the custom HTML report buttons, the hidden Nmap banner, the UI rebranding, and the new usage instructions).
+
+```markdown
 # NIGHTHAWK
 
 **Advanced Network Scanner — a terminal-style GUI front end for Nmap**
 
-NIGHTHAWK is a dark, terminal-inspired graphical interface for [Nmap](https://nmap.org/). It lets you run common scan modes, see the exact command being executed, watch live output stream into the window, and get automatic HTML/JSON/CSV/TXT reports — all without freezing the UI.
+NIGHTHAWK is a dark, terminal-inspired graphical interface for Nmap. It lets you run common scan modes, see the exact command being executed, watch live output stream into the window, and get automatic HTML/JSON/CSV/TXT reports — all without freezing the UI.
 
 > **Use responsibly.** Only scan systems and networks you own or have explicit written permission to test. Unauthorized scanning may be illegal or disruptive.
 
-**Author:** [Ratnadeep Bose](https://github.com/R4tnadeepBose)
+**Author:** Ratnadeep Bose
 
 ---
 
@@ -18,11 +21,12 @@ NIGHTHAWK is a dark, terminal-inspired graphical interface for [Nmap](https://nm
 - Custom scan mode for your own flags
 - Single ports, ranges, or comma-separated port lists (`443`, `1-1024`, `22,80,443`)
 - Aggressive `-T5` timing profile
-- Live command output streamed in real time
+- Live command output streamed in real time (clean output, hidden Nmap banners)
 - Visible **COMMAND RUN** field showing the assembled command
 - Animated loading bar and an **ABORT** button
 - Per-control help (the `?` button)
 - Automatic HTML, JSON, CSV, and TXT reports
+- Built-in export/download buttons directly inside the HTML report page
 - Responsive interface while Nmap runs
 
 ---
@@ -240,7 +244,7 @@ reports/
 └── nighthawk_YYYYMMDD_HHMMSS_<id>.txt
 ```
 
-The HTML report includes a live filter box for searching host, port, state, or service. The report buttons open the latest HTML, JSON, CSV, or TXT file.
+The HTML report opens automatically. It features a live filter box to quickly search by host, port, state, or service. Additionally, the HTML report contains **EXPORT JSON**, **EXPORT CSV**, and **EXPORT TXT** buttons that let you instantly download the data directly from the browser.
 
 ---
 
@@ -374,3 +378,4 @@ Add your chosen license before publishing. MIT is a common choice for small open
 ## Disclaimer
 
 NIGHTHAWK is a front end for Nmap. The author is not responsible for misuse, damage, service interruption, or unauthorized activity. Always obtain written permission before scanning any target you do not own.
+```
