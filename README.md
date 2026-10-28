@@ -196,13 +196,12 @@ python3 -c "import tkinter; print('Tkinter OK')"
 Clone the repository:
 
 ```bash
-git clone https://github.com/R4tnadeepBose/YOUR-REPOSITORY-NAME.git
-cd YOUR-REPOSITORY-NAME
+git clone https://github.com/r4tnadeepbose/NIGHTHAWK.git
+cd NIGHTHAWK
 ```
 
-Replace `YOUR-REPOSITORY-NAME` with the actual GitHub repository name. You can
-also download the repository as a ZIP file from
-[your GitHub profile](https://github.com/R4tnadeepBose) and extract it.
+You can also download the repository as a ZIP file from
+[NIGHTHAWK on GitHub](https://github.com/r4tnadeepbose/NIGHTHAWK) and extract it.
 
 ## Run NIGHTHAWK on Windows
 
