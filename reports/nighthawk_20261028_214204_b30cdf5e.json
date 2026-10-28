@@ -1,0 +1,28 @@
+{
+  "target": "192.168.111.130",
+  "ports": "21",
+  "info": {
+    "os": "Linux 2.6.9 - 2.6.33",
+    "mac": "00:0C:29:FA:DD:2A",
+    "vendor": "VMware",
+    "device": "general purpose",
+    "uptime": "21085s",
+    "distance": "1 hops",
+    "service_info": "Unknown"
+  },
+  "created": "2026-10-28T21:42:04.064478",
+  "results": [
+    {
+      "host": "192.168.111.130",
+      "protocol": "tcp",
+      "port": 21,
+      "state": "open",
+      "reason": "syn-ack",
+      "service": "ftp",
+      "version": "2.3.4",
+      "product": "vsftpd",
+      "extrainfo": "",
+      "scripts": []
+    }
+  ]
+}

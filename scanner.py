@@ -21,13 +21,16 @@ from tkinter import messagebox, scrolledtext, ttk, simpledialog
 
 class NighthawkApp:
     # Color Palette
-    BG = "#091017"
-    PANEL = "#111e29"
-    FG = "#b8f7d4"
-    MUTED = "#7da18f"
-    ACCENT = "#20e08a"
-    WARN = "#ffcc66"
-    ERROR = "#ff6b6b"
+    BG = "#000000"
+    PANEL = "#171717"
+    FG = "#f5f7fa"
+    MUTED = "#a6adb8"
+    ACCENT = "#3595F9"
+    WARN = "#FEDD0B"
+    ERROR = "#E05263"
+    ORANGE = "#F2994A"
+    CRITICAL = "#7A1E30"
+    HEALTHY = "#27AE60"
     
     MAX_TARGET_LENGTH = 253
     MAX_PORT_EXPRESSION_LENGTH = 256
@@ -647,6 +650,7 @@ nmap -sV -Pn -p 80 --open -v -script http-enum 192.168.1.1
         self._execute_command(command, host, ports)
 
     def _execute_command(self, command, host, ports):
+        self.scan_started_at = datetime.datetime.now()
         self.command_var.set(self.display_command(command))
         self.clear_output()
         self.is_scanning = True
@@ -883,6 +887,7 @@ nmap -sV -Pn -p 80 --open -v -script http-enum 192.168.1.1
             base = folder / f"nighthawk_{stamp}_{uuid.uuid4().hex[:8]}"
             
             data = {"target": host, "ports": ports, "info": host_info, "created": datetime.datetime.now().isoformat(), "results": records}
+            self.last_scan_data = data
             base.with_suffix(".json").write_text(json.dumps(data, indent=2), encoding="utf-8")
             
             csv_fields = ["host", "protocol", "port", "state", "reason", "service"]
@@ -1011,6 +1016,7 @@ document.getElementById("filter").addEventListener("input", function () {{
 </script>
 </body>
 </html>"""
+            page = self._dashboard_report_page(data, base)
             base.with_suffix(".html").write_text(page, encoding="utf-8")
             self.last_report = base.with_suffix(".html")
             
@@ -1018,6 +1024,7 @@ document.getElementById("filter").addEventListener("input", function () {{
                 self.current_xml_path.unlink(missing_ok=True)
                 
             self.update_ui(self.log, f"[+] Reports saved: {base}.html / .json / .csv / .txt")
+            self.update_ui(self.refresh_dashboard, data)
             self.update_ui(self.finish_scan, "COMPLETE")
             
             if self.auto_open_var.get():
@@ -1160,6 +1167,581 @@ document.getElementById("filter").addEventListener("input", function () {{
             path = self.last_report.with_suffix("." + extension)
             if path.exists():
                 webbrowser.open(path.as_uri())
+
+    # Version 2 dashboard -------------------------------------------------
+    # These methods deliberately sit at the end of the class so the original
+    # scan and report pipeline remains intact; only the Tkinter presentation is
+    # replaced.
+    def build_ui(self):
+        self.root.title("NIGHTHAWK v2 — Advanced Network Scanner")
+        self.root.geometry("1530x960")
+        self.root.minsize(1180, 760)
+        self.root.configure(bg="#020b16")
+        self.root.grid_rowconfigure(1, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+
+        style = ttk.Style()
+        style.theme_use("clam")
+        style.configure("Nighthawk.Horizontal.TProgressbar", troughcolor=self.PANEL,
+                        background=self.ACCENT, bordercolor=self.PANEL,
+                        lightcolor=self.ACCENT, darkcolor=self.ACCENT)
+        style.configure("Nighthawk.TNotebook", background=self.BG, borderwidth=0)
+        style.configure("Nighthawk.TNotebook.Tab", background=self.PANEL, foreground=self.MUTED,
+                        padding=(22, 10), font=("Segoe UI", 10, "bold"))
+        style.map("Nighthawk.TNotebook.Tab", background=[("selected", self.ACCENT)],
+                  foreground=[("selected", "white")])
+        style.configure("Nighthawk.Treeview", background=self.PANEL, fieldbackground=self.PANEL,
+                        foreground=self.FG, rowheight=28, borderwidth=0,
+                        font=("Segoe UI", 10))
+        style.configure("Nighthawk.Treeview.Heading", background="#202020", foreground=self.FG,
+                        font=("Segoe UI", 9, "bold"), relief=tk.FLAT)
+        style.map("Nighthawk.Treeview", background=[("selected", "#263B54")])
+
+        header = tk.Frame(self.root, bg="#020b16", height=74)
+        header.grid(row=0, column=0, sticky="ew")
+        header.grid_columnconfigure(8, weight=1)
+        logo_path = Path(__file__).with_name("logo.png")
+        try:
+            self.logo_image = tk.PhotoImage(file=logo_path).subsample(8, 8)
+            tk.Label(header, image=self.logo_image, bg="#020b16").grid(row=0, column=0, padx=(18, 8), pady=6)
+        except tk.TclError:
+            tk.Label(header, text="N", bg="#020b16", fg=self.ACCENT, font=("Segoe UI", 26, "bold")).grid(row=0, column=0, padx=(18, 8), pady=8)
+        brand = tk.Frame(header, bg="#020b16")
+        brand.grid(row=0, column=1, sticky="w")
+        tk.Label(brand, text="NIGHTHAWK", bg="#020b16", fg="#47caff", font=("Segoe UI", 23, "bold")).pack(anchor="w")
+        tk.Label(brand, text="ADVANCED NETWORK SCANNER  •  VERSION 2", bg="#020b16", fg="#5e94c8", font=("Segoe UI", 8, "bold")).pack(anchor="w")
+        self._v2_nav_button(header, "◉\nScan", lambda: self.dashboard_tabs.select(self.overview_tab), True).grid(row=0, column=2, padx=(48, 0), sticky="ns")
+        self._v2_nav_button(header, "▤\nReports", self.show_history).grid(row=0, column=3, sticky="ns")
+        self._v2_nav_button(header, "⚙\nSettings", self.show_settings_hint).grid(row=0, column=4, sticky="ns")
+        self._v2_nav_button(header, "ⓘ\nAbout", self.show_about).grid(row=0, column=5, sticky="ns")
+        tk.Label(header, text="NMAP GUI", bg="#020b16", fg="#5f82a6", font=("Segoe UI", 9, "bold")).grid(row=0, column=8, sticky="e", padx=22)
+
+        shell = tk.Frame(self.root, bg="#020b16")
+        shell.grid(row=1, column=0, sticky="nsew", padx=10, pady=(0, 10))
+        shell.grid_rowconfigure(0, weight=1)
+        shell.grid_columnconfigure(1, weight=1)
+
+        sidebar = tk.Frame(shell, bg="#05111f", width=322, highlightbackground="#1260a8", highlightthickness=1)
+        sidebar.grid(row=0, column=0, sticky="nsw", padx=(0, 10))
+        sidebar.grid_propagate(False)
+        self._build_v2_sidebar(sidebar)
+
+        content = tk.Frame(shell, bg="#020b16")
+        content.grid(row=0, column=1, sticky="nsew")
+        content.grid_rowconfigure(4, weight=1)
+        content.grid_columnconfigure(0, weight=1)
+        self._build_v2_content(content)
+
+        self._apply_v1_palette()
+        self.scan_type_changed(self.scan_type.get())
+
+    def _apply_v1_palette(self):
+        """Apply a restrained SOC-dashboard palette to the Version 2 layout."""
+        colors = {
+            "#020b16": self.BG, "#030d18": "#101010", "#05111f": self.PANEL,
+            "#061321": self.PANEL, "#06192c": self.PANEL, "#071524": self.PANEL,
+            "#081a2b": "#1f1f1f", "#091d31": "#101010", "#0a2037": "#202020",
+            "#0b2948": "#202020", "#0b3d70": "#202020", "#123653": "#333333",
+            "#124f9a": "#202020", "#1260a8": "#333333", "#1265df": self.ACCENT,
+            "#153b70": "#202020", "#162b40": "#202020", "#164f96": "#333333",
+            "#1686ff": self.ACCENT, "#1b4d78": "#333333", "#1c4b74": "#333333",
+            "#27669c": "#333333", "#25b9ff": self.ACCENT, "#42e692": self.HEALTHY,
+            "#47caff": self.ACCENT, "#4ca7ff": self.ACCENT, "#4fd7ff": self.ACCENT,
+            "#4fe2e0": self.ACCENT, "#52e99a": self.ACCENT, "#57ed9f": self.ACCENT,
+            "#5e94c8": self.MUTED, "#5f82a6": self.MUTED, "#75c6ff": self.ACCENT,
+            "#78a5d2": self.MUTED, "#82a9d7": self.MUTED, "#88aaca": self.MUTED,
+            "#8fb4d8": self.MUTED, "#91b2d3": self.MUTED, "#9bbad8": self.MUTED,
+            "#9eb9d8": self.MUTED, "#9fc2e5": self.MUTED, "#9fc9f4": self.MUTED,
+            "#b7d4ef": self.FG, "#b9d8ff": self.FG, "#b9ddff": self.FG,
+            "#bcd7ff": self.FG, "#bfd8f3": self.FG, "#c8ddf4": self.FG,
+            "#c8e0ff": self.FG, "#c8e2ff": self.FG, "#d7e9ff": self.FG,
+            "#d9eaff": self.FG, "#e1efff": self.FG, "#e3f2ff": self.FG,
+            "#e6f2ff": self.FG, "#ec3545": self.ACCENT, "#ff5c65": "#5A89C9", "#240018": "#101010",
+        }
+        def recolor(widget):
+            for option in ("background", "foreground", "activebackground", "activeforeground", "insertbackground", "highlightbackground", "highlightcolor", "selectcolor"):
+                try:
+                    current = str(widget.cget(option)).lower()
+                    if current in colors:
+                        widget.configure(**{option: colors[current]})
+                except tk.TclError:
+                    pass
+            for child in widget.winfo_children():
+                recolor(child)
+        recolor(self.root)
+        self._draw_risk(self.ACCENT)
+
+    def _v2_nav_button(self, parent, text, command, active=False):
+        return tk.Button(parent, text=text, command=command, bg="#153b70" if active else "#020b16",
+                         fg="#e3f2ff" if active else "#9fc9f4", activebackground="#164f96",
+                         activeforeground="white", relief=tk.FLAT, bd=0, padx=22, pady=12,
+                         font=("Segoe UI", 10, "bold"), justify=tk.CENTER, cursor="hand2")
+
+    def _v2_title(self, parent, text):
+        tk.Label(parent, text=text, bg=parent.cget("bg"), fg="#d7e9ff",
+                 font=("Segoe UI", 11, "bold")).pack(anchor="w", padx=14, pady=(13, 6))
+
+    def _v2_field(self, parent, label, widget):
+        tk.Label(parent, text=label, bg="#05111f", fg="#d7e9ff", font=("Segoe UI", 10, "bold")).pack(anchor="w", padx=14, pady=(10, 4))
+        widget.pack(fill=tk.X, padx=14)
+
+    def _v2_entry(self, parent, value=""):
+        entry = tk.Entry(parent, bg="#091d31", fg="#e6f2ff", insertbackground="#25b9ff",
+                         relief=tk.FLAT, highlightthickness=1, highlightbackground="#27669c",
+                         highlightcolor="#25b9ff", font=("Segoe UI", 11))
+        entry.insert(0, value)
+        return entry
+
+    def _v2_menu(self, parent, variable, values, command=None):
+        menu = tk.OptionMenu(parent, variable, *values, command=command)
+        menu.config(bg="#091d31", fg="#e6f2ff", activebackground="#164f96", activeforeground="white",
+                    relief=tk.FLAT, highlightthickness=1, highlightbackground="#27669c", anchor="w",
+                    font=("Segoe UI", 10), padx=9)
+        menu["menu"].config(bg="#091d31", fg="#e6f2ff", activebackground="#164f96")
+        return menu
+
+    def _build_v2_sidebar(self, sidebar):
+        self._v2_title(sidebar, "Scan configuration")
+        self.profile_var = tk.StringVar(value=self.config.get("profile", "Custom / Manual"))
+        self.profile_menu = self._v2_menu(sidebar, self.profile_var, list(self.PROFILES), self.apply_profile)
+        self._v2_field(sidebar, "Profile", self.profile_menu)
+
+        self.target_entry = self._v2_entry(sidebar, self.config.get("target", "127.0.0.1"))
+        self._v2_field(sidebar, "Target", self.target_entry)
+        self.port_entry = self._v2_entry(sidebar, self.config.get("ports", "1-1024"))
+        self._v2_field(sidebar, "Port range", self.port_entry)
+        self.port_dropdown = tk.StringVar(value="Custom")
+        ports_menu = self._v2_menu(sidebar, self.port_dropdown, ["Custom", "Top 100", "Top 1000", "All"], self.apply_port_preset)
+        ports_menu.pack(fill=tk.X, padx=14, pady=(5, 0))
+
+        self.scan_type = tk.StringVar(value=self.config.get("scan_type", "TCP Connect (-sT)"))
+        scan_choices = [name for name in self.SCAN_TYPES if not name.startswith("---")]
+        self.scan_menu = self._v2_menu(sidebar, self.scan_type, scan_choices, self.scan_type_changed)
+        self._v2_field(sidebar, "Scan type", self.scan_menu)
+        self.timing_var = tk.StringVar(value=self.config.get("timing", "Insane (T5)"))
+        timing_menu = self._v2_menu(sidebar, self.timing_var, list(self.TIMING_TEMPLATES))
+        self._v2_field(sidebar, "Timing", timing_menu)
+
+        self.options_frame = tk.Frame(sidebar, bg="#05111f")
+        self.options_frame.pack(fill=tk.X, padx=10, pady=(12, 0))
+        tk.Label(self.options_frame, text="Scan options", bg="#05111f", fg="#d7e9ff", font=("Segoe UI", 10, "bold")).pack(anchor="w", padx=4, pady=(0, 4))
+        self.service_var = tk.BooleanVar(value=self.config.get("service", True))
+        self.os_var = tk.BooleanVar(value=self.config.get("os", False))
+        self.nse_default = tk.BooleanVar(value=False)
+        self.nse_vuln = tk.BooleanVar(value=False)
+        self.nse_http = tk.BooleanVar(value=False)
+        self.nse_ssl = tk.BooleanVar(value=False)
+        for text, variable in (("Service detection (-sV)", self.service_var), ("OS detection (-O)", self.os_var),
+                               ("Default scripts (-sC)", self.nse_default), ("Vulnerability scripts", self.nse_vuln),
+                               ("HTTP enumeration", self.nse_http), ("SSL cipher audit", self.nse_ssl)):
+            tk.Checkbutton(self.options_frame, text=text, variable=variable, bg="#05111f", fg="#c8ddf4",
+                           selectcolor="#0b3d70", activebackground="#05111f", activeforeground="white",
+                           font=("Segoe UI", 9), anchor="w", relief=tk.FLAT).pack(fill=tk.X, padx=2, pady=1)
+
+        self.custom_frame = tk.Frame(sidebar, bg="#05111f")
+        self.custom_entry = self._v2_entry(self.custom_frame, "-sT -sV --reason")
+        self._v2_field(self.custom_frame, "Custom Nmap flags", self.custom_entry)
+        self.custom_frame.pack_forget()
+        self.extra_entry = self._v2_entry(sidebar, self.config.get("extra_flags", "--reason"))
+        self._v2_field(sidebar, "Extra flags", self.extra_entry)
+        self.entries = {"TARGET": self.target_entry}
+        self.auto_open_var = tk.BooleanVar(value=self.config.get("auto_open", True))
+        tk.Checkbutton(sidebar, text="Open HTML report when complete", variable=self.auto_open_var, bg="#05111f", fg="#8fb4d8",
+                       selectcolor="#0b3d70", activebackground="#05111f", activeforeground="white",
+                       font=("Segoe UI", 9), anchor="w", relief=tk.FLAT).pack(fill=tk.X, padx=14, pady=(10, 6))
+
+        quick_tools = tk.Frame(sidebar, bg="#05111f")
+        quick_tools.pack(fill=tk.X, padx=14, pady=(0, 8))
+        self.save_fav_btn = tk.Button(quick_tools, text="SAVE PRESET", command=self.save_favorite, bg="#0b2948", fg="#b9ddff",
+                                      activebackground="#164f96", activeforeground="white", relief=tk.FLAT,
+                                      font=("Segoe UI", 8, "bold"), padx=8, pady=6)
+        self.save_fav_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 3))
+        tk.Button(quick_tools, text="? CHEATSHEET", command=self.show_cheatsheet, bg="#0b2948", fg="#b9ddff",
+                  activebackground="#164f96", activeforeground="white", relief=tk.FLAT,
+                  font=("Segoe UI", 8, "bold"), padx=8, pady=6).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(3, 0))
+
+        actions = tk.Frame(sidebar, bg="#05111f")
+        actions.pack(fill=tk.X, side=tk.BOTTOM, padx=14, pady=14)
+        self.start_btn = tk.Button(actions, text="▶  START SCAN", command=self.start_scan, bg=self.ACCENT, fg="#ffffff",
+                                   activebackground="#5A89C9", activeforeground="#ffffff", relief=tk.FLAT,
+                                   font=("Segoe UI", 12, "bold"), pady=11, cursor="hand2")
+        self.start_btn.pack(fill=tk.X)
+        self.stop_btn = tk.Button(actions, text="■  STOP", command=self.stop_scan, bg="#162b40", fg="#b7d4ef",
+                                  activebackground="#294b6c", activeforeground="white", relief=tk.FLAT,
+                                  font=("Segoe UI", 9, "bold"), pady=6, state=tk.DISABLED)
+        self.stop_btn.pack(fill=tk.X, pady=(6, 0))
+
+    def _summary_card(self, parent, title, variable, color):
+        card = tk.Frame(parent, bg="#071524", highlightbackground="#1b4d78", highlightthickness=1)
+        tk.Label(card, text=title.upper(), bg="#071524", fg="#88aaca", font=("Segoe UI", 8, "bold")).pack(anchor="w", padx=14, pady=(10, 2))
+        tk.Label(card, textvariable=variable, bg="#071524", fg=color, font=("Segoe UI", 18, "bold")).pack(anchor="w", padx=14, pady=(0, 10))
+        return card
+
+    def _build_v2_content(self, content):
+        heading = tk.Frame(content, bg="#020b16")
+        heading.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+        heading.grid_columnconfigure(0, weight=1)
+        self.report_title_var = tk.StringVar(value="Ready to scan")
+        self.report_target_var = tk.StringVar(value="Target: choose a host in the scan panel")
+        tk.Label(heading, textvariable=self.report_title_var, bg="#020b16", fg="#bcd7ff", font=("Segoe UI", 22, "bold")).grid(row=0, column=0, sticky="w")
+        tk.Label(heading, textvariable=self.report_target_var, bg="#020b16", fg="#82a9d7", font=("Segoe UI", 12)).grid(row=1, column=0, sticky="w")
+        self.status_label = tk.Label(heading, text="READY", bg="#06192c", fg="#4fd7ff", font=("Segoe UI", 9, "bold"), padx=14, pady=8)
+        self.status_label.grid(row=0, column=1, rowspan=2, sticky="e")
+
+        cards = tk.Frame(content, bg="#020b16")
+        cards.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        for col in range(4): cards.grid_columnconfigure(col, weight=1)
+        self.host_count_var = tk.StringVar(value="—")
+        self.open_ports_var = tk.StringVar(value="—")
+        self.findings_var = tk.StringVar(value="—")
+        self.duration_var = tk.StringVar(value="—")
+        for col, (title, var, color) in enumerate((("Hosts up", self.host_count_var, "#3ddc97"), ("Open ports", self.open_ports_var, self.ACCENT),
+                                                     ("Script findings", self.findings_var, self.ERROR), ("Scan duration", self.duration_var, self.WARN))):
+            self._summary_card(cards, title, var, color).grid(row=0, column=col, sticky="ew", padx=(0 if col == 0 else 7, 0))
+
+        self.dashboard_tabs = ttk.Notebook(content, style="Nighthawk.TNotebook")
+        self.dashboard_tabs.grid(row=4, column=0, sticky="nsew")
+        self.overview_tab = tk.Frame(self.dashboard_tabs, bg="#020b16")
+        ports_tab = tk.Frame(self.dashboard_tabs, bg="#020b16")
+        scripts_tab = tk.Frame(self.dashboard_tabs, bg="#020b16")
+        live_tab = tk.Frame(self.dashboard_tabs, bg="#020b16")
+        export_tab = tk.Frame(self.dashboard_tabs, bg="#020b16")
+        self.dashboard_tabs.add(self.overview_tab, text="Overview")
+        self.dashboard_tabs.add(ports_tab, text="Ports & Services")
+        self.dashboard_tabs.add(scripts_tab, text="Script output")
+        self.dashboard_tabs.add(live_tab, text="Live output")
+        self.dashboard_tabs.add(export_tab, text="Export")
+        self._build_v2_overview(self.overview_tab)
+        self._build_v2_ports(ports_tab)
+        self._build_v2_scripts(scripts_tab)
+        self._build_v2_live(live_tab)
+        self._build_v2_export(export_tab)
+
+    def _build_v2_overview(self, tab):
+        tab.grid_columnconfigure(0, weight=3)
+        tab.grid_columnconfigure(1, weight=2)
+        info = tk.Frame(tab, bg="#061321", highlightbackground="#1c4b74", highlightthickness=1)
+        info.grid(row=0, column=0, sticky="nsew", padx=(0, 8), pady=8)
+        tk.Label(info, text="◉  Target information", bg="#061321", fg="#4fe2e0", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=15, pady=12)
+        self.info_vars = {key: tk.StringVar(value="—") for key in ("IP address", "MAC address", "Operating system", "Network distance", "Service info")}
+        for key, variable in self.info_vars.items():
+            row = tk.Frame(info, bg="#081a2b")
+            row.pack(fill=tk.X, padx=15, pady=1)
+            tk.Label(row, text=key, width=18, anchor="w", bg="#081a2b", fg="#9fc2e5", font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=8, pady=6)
+            tk.Label(row, textvariable=variable, anchor="w", bg="#081a2b", fg="#e1efff", font=("Segoe UI", 9)).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=8)
+        risk = tk.Frame(tab, bg="#061321", highlightbackground="#1c4b74", highlightthickness=1)
+        risk.grid(row=0, column=1, sticky="nsew", pady=8)
+        tk.Label(risk, text="◉  Risk assessment", bg="#061321", fg="#4fe2e0", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=15, pady=12)
+        self.risk_canvas = tk.Canvas(risk, width=210, height=190, bg="#061321", highlightthickness=0)
+        self.risk_canvas.pack(side=tk.LEFT, padx=12, pady=2)
+        self.risk_label = tk.StringVar(value="AWAITING\nSCAN")
+        self._draw_risk("#1686ff")
+        legend = tk.Frame(risk, bg="#061321")
+        legend.pack(side=tk.LEFT, fill=tk.Y, padx=4)
+        self.risk_detail_var = tk.StringVar(value="Run a scan to assess\nopen services and scripts.")
+        tk.Label(legend, textvariable=self.risk_detail_var, justify=tk.LEFT, bg="#061321", fg="#bfd8f3", font=("Segoe UI", 10)).pack(anchor="w", pady=(53, 0))
+
+    def _draw_risk(self, color):
+        self.risk_canvas.delete("all")
+        self.risk_canvas.create_oval(37, 25, 173, 161, outline="#2b3540", width=9)
+        self.risk_canvas.create_arc(37, 25, 173, 161, start=90, extent=270, style=tk.ARC, outline=color, width=9)
+        self.risk_canvas.create_text(105, 84, text=self.risk_label.get(), fill=color, font=("Segoe UI", 13, "bold"), justify=tk.CENTER)
+        self.risk_canvas.create_text(105, 125, text="assessment", fill="#8e9baa", font=("Segoe UI", 8), justify=tk.CENTER)
+
+    def _risk_assessment(self, records):
+        """Return one severity decision for both the desktop and HTML reports."""
+        open_ports = [record for record in records if record.get("state") == "open"]
+        scripts = [script for record in records for script in record.get("scripts", [])]
+        script_text = " ".join(str(script.get("output", "")) for script in scripts).casefold()
+        if any(term in script_text for term in ("critical", "exploit", "remote code execution")):
+            return {"label": "CRITICAL", "color": self.CRITICAL, "css": "risk-critical", "detail": "Critical exploit evidence detected."}
+        if any(term in script_text for term in ("vulnerable", "cve-", "high severity")):
+            return {"label": "HIGH RISK", "color": self.ERROR, "css": "risk-high", "detail": "High-risk vulnerability evidence detected."}
+        if scripts:
+            return {"label": "REVIEW", "color": self.ORANGE, "css": "risk-review", "detail": "Script findings require review."}
+        if open_ports:
+            return {"label": "EXPOSED", "color": self.WARN, "css": "risk-exposed", "detail": "Open services were detected."}
+        return {"label": "CLEAR", "color": self.HEALTHY, "css": "risk-clear", "detail": "No open services or script findings."}
+
+    def _build_v2_ports(self, tab):
+        columns = ("port", "state", "service", "version", "reason")
+        self.port_table = ttk.Treeview(tab, columns=columns, show="headings", style="Nighthawk.Treeview")
+        for name, width in (("port", 110), ("state", 110), ("service", 160), ("version", 340), ("reason", 170)):
+            self.port_table.heading(name, text=name.upper())
+            self.port_table.column(name, width=width, anchor="w")
+        self.port_table.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
+        self.port_table.tag_configure("open", foreground="#3ddc97")
+        self.port_table.tag_configure("closed", foreground=self.ERROR)
+
+    def _build_v2_scripts(self, tab):
+        self.scripts_view = scrolledtext.ScrolledText(tab, state=tk.DISABLED, bg="#061321", fg="#d9eaff", insertbackground="#25b9ff",
+                                                       relief=tk.FLAT, font=("Cascadia Mono", 10), padx=14, pady=14)
+        self.scripts_view.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
+
+    def _build_v2_live(self, tab):
+        top = tk.Frame(tab, bg="#020b16")
+        top.pack(fill=tk.X, padx=8, pady=(8, 0))
+        self.command_var = tk.StringVar(value="Waiting for scan configuration…")
+        tk.Label(top, text="COMMAND", bg="#020b16", fg="#78a5d2", font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT, padx=(0, 8))
+        tk.Label(top, textvariable=self.command_var, bg="#061321", fg="#75c6ff", anchor="w", font=("Cascadia Mono", 9), padx=10, pady=8).pack(side=tk.LEFT, fill=tk.X, expand=True)
+        self.progress = ttk.Progressbar(top, mode="indeterminate", length=160, style="Nighthawk.Horizontal.TProgressbar")
+        self.progress.pack(side=tk.RIGHT, padx=(10, 0))
+        self.live_info_label = tk.Label(tab, text="MAC: ---  |  OS: ---", bg="#020b16", fg="#9bbad8", font=("Segoe UI", 9, "bold"), anchor="w")
+        self.live_info_label.pack(fill=tk.X, padx=8, pady=8)
+        self.output = scrolledtext.ScrolledText(tab, state=tk.DISABLED, bg="#030d18", fg="#c8e0ff", insertbackground="#25b9ff",
+                                                relief=tk.FLAT, font=("Cascadia Mono", 10), padx=14, pady=14)
+        self.output.pack(fill=tk.BOTH, expand=True, padx=8, pady=(0, 8))
+        self.output.tag_config("open", foreground="#3ddc97")
+        self.output.tag_config("closed", foreground=self.WARN)
+        self.output.tag_config("error", foreground=self.ERROR)
+
+    def _build_v2_export(self, tab):
+        tk.Label(tab, text="Export completed scan reports", bg="#020b16", fg="#d7e9ff", font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=22, pady=(24, 5))
+        tk.Label(tab, text="NIGHTHAWK saves HTML, JSON, CSV, and TXT reports in the reports folder.", bg="#020b16", fg="#91b2d3", font=("Segoe UI", 10)).pack(anchor="w", padx=22, pady=(0, 20))
+        buttons = tk.Frame(tab, bg="#020b16")
+        buttons.pack(anchor="w", padx=22)
+        self.open_report_btn = tk.Button(buttons, text="OPEN HTML REPORT", command=self.open_report, bg="#1265df", fg="white", relief=tk.FLAT, font=("Segoe UI", 10, "bold"), padx=14, pady=10, state=tk.DISABLED)
+        self.open_report_btn.pack(side=tk.LEFT, padx=(0, 8))
+        for label, ext in (("JSON", "json"), ("CSV", "csv"), ("TXT", "txt")):
+            tk.Button(buttons, text=label, command=lambda e=ext: self.export_report(e), bg="#0b2948", fg="#c8e2ff", relief=tk.FLAT, font=("Segoe UI", 10, "bold"), padx=14, pady=10).pack(side=tk.LEFT, padx=4)
+        tk.Button(tab, text="SCAN HISTORY & DIFF", command=self.show_history, bg="#0b2948", fg="#c8e2ff", relief=tk.FLAT, font=("Segoe UI", 10, "bold"), padx=14, pady=10).pack(anchor="w", padx=22, pady=16)
+
+    def scan_type_changed(self, selected):
+        custom_types = {"Custom Flags", "Fragment Packets (-f)", "Custom MTU (--mtu 24)", "Decoy Scan (-D RND:10)", "Spoof MAC (--spoof-mac 0)", "Bad Checksum (--badsum)", "Idle Scan (-sI)", "Source Port Spoof (-g 53)"}
+        if selected == "Custom Flags":
+            self.custom_frame.pack(fill=tk.X, before=self.extra_entry, padx=0, pady=0)
+        else:
+            self.custom_frame.pack_forget()
+        if selected in custom_types:
+            self.options_frame.configure(bg="#05111f")
+
+    def refresh_dashboard(self, data):
+        results = data.get("results", [])
+        open_ports = [item for item in results if item.get("state") == "open"]
+        scripts = [script for item in results for script in item.get("scripts", [])]
+        target = data.get("target", "Unknown")
+        info = data.get("info", {})
+        self.report_title_var.set("Scan report")
+        self.report_target_var.set(f"Target: {target}")
+        self.host_count_var.set("1")
+        self.open_ports_var.set(str(len(open_ports)))
+        self.findings_var.set(str(len(scripts)))
+        if hasattr(self, "scan_started_at"):
+            self.duration_var.set(str(datetime.datetime.now() - self.scan_started_at).split(".")[0])
+        self.info_vars["IP address"].set(target)
+        self.info_vars["MAC address"].set(info.get("mac", "Unknown"))
+        self.info_vars["Operating system"].set(info.get("os", "Unknown"))
+        self.info_vars["Network distance"].set(info.get("distance", "Unknown"))
+        self.info_vars["Service info"].set(info.get("service_info", "Unknown"))
+        for item in self.port_table.get_children():
+            self.port_table.delete(item)
+        for item in results:
+            version = " ".join(part for part in (item.get("product", ""), item.get("version", ""), item.get("extrainfo", "")) if part).strip()
+            self.port_table.insert("", tk.END, values=(f"{item.get('port')}/{item.get('protocol')}", item.get("state", ""), item.get("service", ""), version or "—", item.get("reason", "")), tags=("open" if item.get("state") == "open" else "closed",))
+        self.scripts_view.config(state=tk.NORMAL)
+        self.scripts_view.delete("1.0", tk.END)
+        if scripts:
+            for item in results:
+                for script in item.get("scripts", []):
+                    self.scripts_view.insert(tk.END, f"[{item.get('port')}/{item.get('protocol')}] {script.get('id')}\n{script.get('output')}\n\n")
+        else:
+            self.scripts_view.insert(tk.END, "No Nmap script output was returned for this scan.")
+        self.scripts_view.config(state=tk.DISABLED)
+        assessment = self._risk_assessment(results)
+        self.risk_label.set(assessment["label"].replace(" ", "\n"))
+        self._draw_risk(assessment["color"])
+        self.risk_detail_var.set(f"{assessment['detail']}\n{len(scripts)} script finding(s) · {len(open_ports)} open port(s)")
+        self.dashboard_tabs.select(self.overview_tab)
+
+    def show_settings_hint(self):
+        messagebox.showinfo("Settings", "Scan settings are available in the left configuration panel.")
+
+    def show_about(self):
+        messagebox.showinfo("About NIGHTHAWK", "NIGHTHAWK v2\nAdvanced Network Scanner\n\nOnly scan hosts you own or have permission to test.")
+
+    def _dashboard_report_page(self, data, base):
+        """Create a standalone browser report using the same dashboard language as the app."""
+        records = data.get("results", [])
+        info = data.get("info", {})
+        open_ports = [record for record in records if record.get("state") == "open"]
+        scripts = [script for record in records for script in record.get("scripts", [])]
+        assessment = self._risk_assessment(records)
+        risk = assessment["label"]
+        risk_class = assessment["css"]
+        rows = []
+        for record in records:
+            version = " ".join(part for part in (record.get("product", ""), record.get("version", ""), record.get("extrainfo", "")) if part).strip() or "—"
+            state = html.escape(str(record.get("state", "")))
+            state_class = "state-open" if state == "open" else "state-other"
+            rows.append(
+                "<tr><td>{}</td><td class='{}'>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(
+                    html.escape(f"{record.get('port', '')}/{record.get('protocol', '')}"), state_class, state,
+                    html.escape(str(record.get("service", "") or "—")), html.escape(version),
+                    html.escape(str(record.get("reason", "") or "—"))
+                )
+            )
+        if not rows:
+            rows.append("<tr><td colspan='5' class='empty'>No port results were returned.</td></tr>")
+        script_blocks = []
+        for record in records:
+            for script in record.get("scripts", []):
+                script_blocks.append("<article class='script'><header>{}</header><pre>{}</pre></article>".format(
+                    html.escape(f"{record.get('port', '')}/{record.get('protocol', '')}  •  {script.get('id', 'script')}"),
+                    html.escape(str(script.get("output", "")))
+                ))
+        if not script_blocks:
+            script_blocks.append("<p class='empty'>No Nmap script output was returned for this scan.</p>")
+        metadata = (("Target", data.get("target", "Unknown")), ("MAC address", info.get("mac", "Unknown")),
+                    ("Operating system", info.get("os", "Unknown")), ("Network distance", info.get("distance", "Unknown")))
+        meta_html = "".join("<div class='meta'><span>{}</span><strong>{}</strong></div>".format(html.escape(label), html.escape(str(value))) for label, value in metadata)
+        return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NIGHTHAWK — Scan report</title>
+<style>
+:root {{ color-scheme: dark; --bg:#000000; --panel:#171717; --panel-2:#202020; --line:#353535; --text:#f5f7fa; --muted:#a6adb8; --primary:#3595F9; --green:#27AE60; --yellow:#FEDD0B; --orange:#F2994A; --red:#E05263; --maroon:#7A1E30; }}
+* {{ box-sizing:border-box; }} body {{ margin:0; background:var(--bg); color:var(--text); font:14px/1.45 "Segoe UI",system-ui,sans-serif; }}
+.topbar {{ display:flex; align-items:center; gap:14px; padding:16px max(24px,calc((100vw - 1500px)/2)); border-bottom:1px solid var(--line); background:#101010; color:var(--text); }}
+.topbar .brand {{ color:var(--primary); }} .topbar .brand small {{ color:var(--muted); }} .mark {{ width:38px; height:38px; display:grid; place-items:center; overflow:hidden; }} .mark img {{ width:38px; height:38px; object-fit:contain; }}
+.brand {{ font-weight:800; letter-spacing:.08em; }} .brand small {{ display:block; letter-spacing:.04em; font-size:10px; margin-top:2px; }}
+.status {{ margin-left:auto; color:var(--primary); border:1px solid #245b98; padding:5px 9px; font-size:11px; font-weight:700; }}
+main {{ max-width:1500px; margin:auto; padding:24px; }} h1 {{ font-size:24px; margin:0; }} .sub {{ margin:5px 0 20px; color:var(--muted); }}
+.summary {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px; }} .card,.panel {{ background:var(--panel); border:1px solid var(--line); }}
+.card {{ padding:13px 15px; }} .card span {{ display:block; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.06em; }} .card strong {{ display:block; margin-top:5px; font-size:21px; color:var(--primary); }} .card.good strong {{ color:var(--green); }} .card.warn strong {{ color:var(--yellow); }} .card.bad strong {{ color:var(--red); }}
+.grid {{ display:grid; grid-template-columns:1.1fr 2fr; gap:14px; margin-bottom:14px; }} .panel-title {{ padding:13px 15px; border-bottom:1px solid var(--line); color:var(--text); font-weight:700; }}
+.metadata {{ padding:8px 15px; }} .meta {{ display:grid; grid-template-columns:150px 1fr; gap:12px; padding:8px 0; border-bottom:1px solid #222b35; }} .meta:last-child {{ border:0; }} .meta span {{ color:var(--muted); }}
+.risk {{ display:flex; align-items:center; gap:14px; padding:16px; }} .risk-badge {{ width:92px; height:92px; border-radius:50%; display:grid; place-items:center; text-align:center; border:8px solid currentColor; font-weight:800; font-size:14px; }} .risk-critical {{ color:var(--maroon); }} .risk-high {{ color:var(--red); }} .risk-review {{ color:var(--orange); }} .risk-exposed {{ color:var(--yellow); }} .risk-clear {{ color:var(--green); }} .risk p {{ color:var(--muted); margin:0; }}
+.toolbar {{ display:flex; gap:8px; padding:14px; border-bottom:1px solid var(--line); }} button {{ border:1px solid #245b98; background:#1c4e83; color:#ffffff; padding:8px 11px; font:600 12px "Segoe UI",sans-serif; cursor:pointer; }} button:hover {{ background:#286cb4; }} input {{ margin-left:auto; min-width:260px; background:#101010; color:var(--text); border:1px solid var(--line); padding:8px 10px; }}
+table {{ width:100%; border-collapse:collapse; }} th,td {{ padding:10px 14px; text-align:left; border-bottom:1px solid #2b2b2b; }} th {{ color:var(--muted); font-size:11px; letter-spacing:.05em; text-transform:uppercase; background:#202020; }} tr:hover td {{ background:#202020; }} .state-open {{ color:var(--green); font-weight:700; }} .state-other {{ color:var(--yellow); }}
+.scripts {{ margin-top:14px; }} .script {{ margin:12px 14px; border:1px solid #303030; background:#101010; }} .script header {{ padding:8px 10px; color:var(--primary); border-bottom:1px solid #303030; font-weight:700; }} pre {{ margin:0; padding:12px; white-space:pre-wrap; overflow:auto; color:#dbe7f5; font:12px/1.45 ui-monospace,Consolas,monospace; }} .empty {{ color:var(--muted); padding:18px; text-align:center; }}
+@media (max-width:850px) {{ main {{ padding:14px; }} .summary,.grid {{ grid-template-columns:1fr 1fr; }} .grid {{ display:block; }} .grid>.panel {{ margin-bottom:14px; }} input {{ min-width:0; width:100%; margin:0; }} .toolbar {{ flex-wrap:wrap; }} }}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="mark"><img src="../logo.png" alt="Nighthawk"></div><div class="brand">NIGHTHAWK<small>ADVANCED NETWORK SCANNER</small></div><div class="status">SCAN COMPLETE</div></header>
+<main>
+<h1>Scan report</h1><p class="sub">Target: {html.escape(str(data.get('target', 'Unknown')))} &nbsp;•&nbsp; Ports: {html.escape(str(data.get('ports', '')))} &nbsp;•&nbsp; {html.escape(str(data.get('created', '')).replace('T', ' ')[:19])}</p>
+<section class="summary"><div class="card good"><span>Hosts up</span><strong>1</strong></div><div class="card"><span>Open ports</span><strong>{len(open_ports)}</strong></div><div class="card {'bad' if assessment['css'] in ('risk-critical', 'risk-high') else 'warn'}"><span>Script findings</span><strong>{len(scripts)}</strong></div><div class="card"><span>Ports scanned</span><strong>{html.escape(str(data.get('ports', '—')))}</strong></div></section>
+<section class="grid"><div class="panel"><div class="panel-title">Target information</div><div class="metadata">{meta_html}</div></div><div class="panel"><div class="panel-title">Risk assessment</div><div class="risk {risk_class}"><div class="risk-badge">{risk}</div><p>{assessment['detail']}<br>{len(open_ports)} open port(s) · {len(scripts)} script finding(s)</p></div></div></section>
+<section class="panel"><div class="panel-title">Ports &amp; services</div><div class="toolbar"><button onclick="downloadFile('json')">Export JSON</button><button onclick="downloadFile('csv')">Export CSV</button><button onclick="downloadFile('txt')">Export TXT</button><input id="filter" type="search" placeholder="Filter port, state, service, or version"></div><table id="results"><thead><tr><th>Port</th><th>State</th><th>Service</th><th>Version</th><th>Reason</th></tr></thead><tbody>{''.join(rows)}</tbody></table></section>
+<section class="panel scripts"><div class="panel-title">Script output</div>{''.join(script_blocks)}</section>
+</main>
+<script>
+const reportData = {{json:{json.dumps(data)},csv:{json.dumps(base.with_suffix('.csv').read_text(encoding='utf-8'))},txt:{json.dumps(base.with_suffix('.txt').read_text(encoding='utf-8'))}}};
+function downloadFile(ext) {{ const blob=new Blob([typeof reportData[ext] === 'string' ? reportData[ext] : JSON.stringify(reportData[ext],null,2)],{{type:'text/plain'}}); const url=URL.createObjectURL(blob); const link=document.createElement('a'); link.href=url; link.download='{base.name}.'+ext; link.click(); URL.revokeObjectURL(url); }}
+document.getElementById('filter').addEventListener('input', function() {{ const q=this.value.toLowerCase(); document.querySelectorAll('#results tbody tr').forEach(row => row.hidden=!row.textContent.toLowerCase().includes(q)); }});
+</script></body></html>"""
+
+    def show_history(self):
+        """Show reports in a compact, selectable history and comparison workspace."""
+        folder = Path(__file__).with_name("reports")
+        files = sorted(folder.glob("*.json"), reverse=True) if folder.exists() else []
+        if not files:
+            messagebox.showinfo("Scan history", "No completed scan reports are available yet.")
+            return
+
+        win = tk.Toplevel(self.root)
+        win.title("NIGHTHAWK — Scan history")
+        win.geometry("1120x690")
+        win.minsize(900, 540)
+        win.configure(bg=self.BG)
+        win.grid_rowconfigure(1, weight=1)
+        win.grid_columnconfigure(0, weight=1)
+
+        header = tk.Frame(win, bg=self.BG)
+        header.grid(row=0, column=0, sticky="ew", padx=18, pady=(16, 10))
+        tk.Label(header, text="Scan history", bg=self.BG, fg=self.FG, font=("Segoe UI", 18, "bold")).pack(anchor="w")
+        tk.Label(header, text="Select two reports to compare. Double-click one report to open its HTML view.", bg=self.BG, fg=self.MUTED, font=("Segoe UI", 10)).pack(anchor="w", pady=(2, 0))
+
+        workspace = tk.PanedWindow(win, orient=tk.HORIZONTAL, sashwidth=5, bg=self.BG, bd=0, sashrelief=tk.FLAT)
+        workspace.grid(row=1, column=0, sticky="nsew", padx=18, pady=(0, 12))
+        left = tk.Frame(workspace, bg=self.PANEL, highlightbackground="#914187", highlightthickness=1)
+        right = tk.Frame(workspace, bg=self.PANEL, highlightbackground="#914187", highlightthickness=1)
+        workspace.add(left, minsize=410)
+        workspace.add(right, minsize=390)
+
+        tk.Label(left, text="Completed scans", bg=self.PANEL, fg=self.FG, font=("Segoe UI", 11, "bold")).pack(anchor="w", padx=14, pady=(12, 7))
+        columns = ("date", "target", "ports", "open")
+        history = ttk.Treeview(left, columns=columns, show="headings", selectmode="extended", style="Nighthawk.Treeview")
+        for key, heading, width in (("date", "DATE", 145), ("target", "TARGET", 135), ("ports", "PORTS", 100), ("open", "OPEN", 55)):
+            history.heading(key, text=heading)
+            history.column(key, width=width, anchor="w")
+        history.pack(fill=tk.BOTH, expand=True, padx=12, pady=(0, 12))
+        report_files = {}
+        for report in files:
+            try:
+                payload = json.loads(report.read_text(encoding="utf-8"))
+                created = payload.get("created", "").replace("T", " ")[:16] or report.stem
+                open_count = sum(1 for item in payload.get("results", []) if item.get("state") == "open")
+                item_id = history.insert("", tk.END, values=(created, payload.get("target", "—"), payload.get("ports", "—"), open_count))
+                report_files[item_id] = report
+            except (OSError, ValueError, json.JSONDecodeError):
+                item_id = history.insert("", tk.END, values=(report.stem, "—", "—", "—"))
+                report_files[item_id] = report
+
+        tk.Label(right, text="Comparison", bg=self.PANEL, fg=self.FG, font=("Segoe UI", 11, "bold")).pack(anchor="w", padx=14, pady=(12, 7))
+        diff = scrolledtext.ScrolledText(right, state=tk.DISABLED, bg="#240018", fg=self.FG, insertbackground=self.ACCENT,
+                                         relief=tk.FLAT, font=("Cascadia Mono", 10), padx=14, pady=12)
+        diff.pack(fill=tk.BOTH, expand=True, padx=12, pady=(0, 12))
+        diff.tag_config("added", foreground="#3ddc97")
+        diff.tag_config("removed", foreground=self.ERROR)
+        diff.tag_config("heading", foreground="#f2c8ed", font=("Cascadia Mono", 10, "bold"))
+        diff.tag_config("muted", foreground=self.MUTED)
+
+        actions = tk.Frame(win, bg=self.BG)
+        actions.grid(row=2, column=0, sticky="ew", padx=18, pady=(0, 16))
+        selection_note = tk.StringVar(value="Choose two reports to compare their open ports.")
+        tk.Label(actions, textvariable=selection_note, bg=self.BG, fg=self.MUTED, font=("Segoe UI", 9)).pack(side=tk.LEFT)
+
+        def selected_reports():
+            ids = history.selection()
+            return [report_files[item] for item in ids if item in report_files]
+
+        def write_diff():
+            chosen = selected_reports()
+            if len(chosen) != 2:
+                selection_note.set("Select exactly two reports to compare.")
+                return
+            try:
+                older, newer = (json.loads(path.read_text(encoding="utf-8")) for path in chosen)
+                old_ports = {(item.get("protocol"), item.get("port")): item for item in older.get("results", []) if item.get("state") == "open"}
+                new_ports = {(item.get("protocol"), item.get("port")): item for item in newer.get("results", []) if item.get("state") == "open"}
+                added = sorted(set(new_ports) - set(old_ports))
+                removed = sorted(set(old_ports) - set(new_ports))
+                diff.config(state=tk.NORMAL)
+                diff.delete("1.0", tk.END)
+                diff.insert(tk.END, "REPORT COMPARISON\n", "heading")
+                diff.insert(tk.END, f"Older: {older.get('target', '—')}  |  Newer: {newer.get('target', '—')}\n\n", "muted")
+                if added:
+                    diff.insert(tk.END, "NEWLY OPEN PORTS\n", "heading")
+                    for protocol, port in added:
+                        record = new_ports[(protocol, port)]
+                        diff.insert(tk.END, f"+ {port}/{protocol}  {record.get('service', 'unknown')}\n", "added")
+                    diff.insert(tk.END, "\n")
+                if removed:
+                    diff.insert(tk.END, "NO LONGER OPEN\n", "heading")
+                    for protocol, port in removed:
+                        record = old_ports[(protocol, port)]
+                        diff.insert(tk.END, f"- {port}/{protocol}  {record.get('service', 'unknown')}\n", "removed")
+                if not added and not removed:
+                    diff.insert(tk.END, "No open-port changes were found.", "muted")
+                diff.config(state=tk.DISABLED)
+                selection_note.set(f"Compared {chosen[0].name} with {chosen[1].name}.")
+            except (OSError, ValueError, json.JSONDecodeError) as error:
+                messagebox.showerror("Comparison failed", str(error), parent=win)
+
+        def open_selected(_event=None):
+            chosen = selected_reports()
+            if chosen:
+                report = chosen[0].with_suffix(".html")
+                if report.exists():
+                    webbrowser.open(report.as_uri())
+
+        history.bind("<Double-1>", open_selected)
+        tk.Button(actions, text="OPEN REPORT", command=open_selected, bg="#3d1231", fg=self.FG, relief=tk.FLAT, font=("Segoe UI", 9, "bold"), padx=13, pady=8).pack(side=tk.RIGHT, padx=(8, 0))
+        tk.Button(actions, text="COMPARE SELECTED", command=write_diff, bg=self.ACCENT, fg="white", relief=tk.FLAT, font=("Segoe UI", 9, "bold"), padx=13, pady=8).pack(side=tk.RIGHT)
 
 
 if __name__ == "__main__":

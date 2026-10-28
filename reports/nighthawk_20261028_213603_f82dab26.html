@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NIGHTHAWK — Scan report</title>
+<style>
+:root { color-scheme: dark; --bg:#0b0f14; --panel:#151b23; --panel-2:#1b222c; --line:#2b3540; --text:#e7edf5; --muted:#8e9baa; --blue:#4da3ff; --green:#3ddc97; --yellow:#f7c948; --orange:#fb923c; --red:#ef5350; }
+* { box-sizing:border-box; } body { margin:0; background:var(--bg); color:var(--text); font:14px/1.45 "Segoe UI",system-ui,sans-serif; }
+.topbar { display:flex; align-items:center; gap:14px; padding:16px max(24px,calc((100vw - 1500px)/2)); border-bottom:1px solid var(--line); background:#0d1219; }
+.mark { width:34px; height:34px; border:1px solid var(--blue); color:var(--blue); display:grid; place-items:center; font-weight:800; }
+.brand { font-weight:800; letter-spacing:.08em; } .brand small { display:block; color:var(--muted); letter-spacing:.04em; font-size:10px; margin-top:2px; }
+.status { margin-left:auto; color:var(--green); border:1px solid #246d51; padding:5px 9px; font-size:11px; font-weight:700; }
+main { max-width:1500px; margin:auto; padding:24px; } h1 { font-size:24px; margin:0; } .sub { margin:5px 0 20px; color:var(--muted); }
+.summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px; } .card,.panel { background:var(--panel); border:1px solid var(--line); }
+.card { padding:13px 15px; } .card span { display:block; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.06em; } .card strong { display:block; margin-top:5px; font-size:21px; color:var(--blue); } .card.good strong { color:var(--green); } .card.warn strong { color:var(--yellow); } .card.bad strong { color:var(--red); }
+.grid { display:grid; grid-template-columns:1.1fr 2fr; gap:14px; margin-bottom:14px; } .panel-title { padding:13px 15px; border-bottom:1px solid var(--line); color:var(--text); font-weight:700; }
+.metadata { padding:8px 15px; } .meta { display:grid; grid-template-columns:150px 1fr; gap:12px; padding:8px 0; border-bottom:1px solid #222b35; } .meta:last-child { border:0; } .meta span { color:var(--muted); }
+.risk { display:flex; align-items:center; gap:14px; padding:16px; } .risk-badge { width:92px; height:92px; border-radius:50%; display:grid; place-items:center; text-align:center; border:8px solid currentColor; font-weight:800; font-size:14px; } .risk-high { color:var(--red); } .risk-review { color:var(--orange); } .risk-clear { color:var(--green); } .risk p { color:var(--muted); margin:0; }
+.toolbar { display:flex; gap:8px; padding:14px; border-bottom:1px solid var(--line); } button { border:1px solid #2d4963; background:#132436; color:var(--text); padding:8px 11px; font:600 12px "Segoe UI",sans-serif; cursor:pointer; } button:hover { border-color:var(--blue); } input { margin-left:auto; min-width:260px; background:#0d1219; color:var(--text); border:1px solid var(--line); padding:8px 10px; }
+table { width:100%; border-collapse:collapse; } th,td { padding:10px 14px; text-align:left; border-bottom:1px solid #252e38; } th { color:var(--muted); font-size:11px; letter-spacing:.05em; text-transform:uppercase; background:#121922; } tr:hover td { background:#18212b; } .state-open { color:var(--green); font-weight:700; } .state-other { color:var(--yellow); }
+.scripts { margin-top:14px; } .script { margin:12px 14px; border:1px solid #293440; background:#0d1219; } .script header { padding:8px 10px; color:var(--blue); border-bottom:1px solid #293440; font-weight:700; } pre { margin:0; padding:12px; white-space:pre-wrap; overflow:auto; color:#d3dde8; font:12px/1.45 ui-monospace,Consolas,monospace; } .empty { color:var(--muted); padding:18px; text-align:center; }
+@media (max-width:850px) { main { padding:14px; } .summary,.grid { grid-template-columns:1fr 1fr; } .grid { display:block; } .grid>.panel { margin-bottom:14px; } input { min-width:0; width:100%; margin:0; } .toolbar { flex-wrap:wrap; } }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="mark">N</div><div class="brand">NIGHTHAWK<small>ADVANCED NETWORK SCANNER</small></div><div class="status">SCAN COMPLETE</div></header>
+<main>
+<h1>Scan report</h1><p class="sub">Target: 192.168.111.130 &nbsp;•&nbsp; Ports: 21 &nbsp;•&nbsp; 2026-10-28 21:36:03</p>
+<section class="summary"><div class="card good"><span>Hosts up</span><strong>1</strong></div><div class="card"><span>Open ports</span><strong>1</strong></div><div class="card warn"><span>Script findings</span><strong>0</strong></div><div class="card"><span>Ports scanned</span><strong>21</strong></div></section>
+<section class="grid"><div class="panel"><div class="panel-title">Target information</div><div class="metadata"><div class='meta'><span>Target</span><strong>192.168.111.130</strong></div><div class='meta'><span>MAC address</span><strong>00:0C:29:FA:DD:2A</strong></div><div class='meta'><span>Operating system</span><strong>Linux 2.6.9 - 2.6.33</strong></div><div class='meta'><span>Network distance</span><strong>1 hops</strong></div></div></div><div class="panel"><div class="panel-title">Risk assessment</div><div class="risk risk-review"><div class="risk-badge">EXPOSED</div><p>1 open port(s)<br>0 script finding(s)</p></div></div></section>
+<section class="panel"><div class="panel-title">Ports &amp; services</div><div class="toolbar"><button onclick="downloadFile('json')">Export JSON</button><button onclick="downloadFile('csv')">Export CSV</button><button onclick="downloadFile('txt')">Export TXT</button><input id="filter" type="search" placeholder="Filter port, state, service, or version"></div><table id="results"><thead><tr><th>Port</th><th>State</th><th>Service</th><th>Version</th><th>Reason</th></tr></thead><tbody><tr><td>21/tcp</td><td class='state-open'>open</td><td>ftp</td><td>vsftpd 2.3.4</td><td>syn-ack</td></tr></tbody></table></section>
+<section class="panel scripts"><div class="panel-title">Script output</div><p class='empty'>No Nmap script output was returned for this scan.</p></section>
+</main>
+<script>
+const reportData = {json:{"target": "192.168.111.130", "ports": "21", "info": {"os": "Linux 2.6.9 - 2.6.33", "mac": "00:0C:29:FA:DD:2A", "vendor": "VMware", "device": "general purpose", "uptime": "20725s", "distance": "1 hops", "service_info": "Unknown"}, "created": "2026-10-28T21:36:03.408386", "results": [{"host": "192.168.111.130", "protocol": "tcp", "port": 21, "state": "open", "reason": "syn-ack", "service": "ftp", "version": "2.3.4", "product": "vsftpd", "extrainfo": "", "scripts": []}]},csv:"host,protocol,port,state,reason,service,version,product,extrainfo\n192.168.111.130,tcp,21,open,syn-ack,ftp,2.3.4,vsftpd,\n",txt:"192.168.111.130:21/tcp open syn-ack ftp 2.3.4"};
+function downloadFile(ext) { const blob=new Blob([typeof reportData[ext] === 'string' ? reportData[ext] : JSON.stringify(reportData[ext],null,2)],{type:'text/plain'}); const url=URL.createObjectURL(blob); const link=document.createElement('a'); link.href=url; link.download='nighthawk_20261028_213603_f82dab26.'+ext; link.click(); URL.revokeObjectURL(url); }
+document.getElementById('filter').addEventListener('input', function() { const q=this.value.toLowerCase(); document.querySelectorAll('#results tbody tr').forEach(row => row.hidden=!row.textContent.toLowerCase().includes(q)); });
+</script></body></html>

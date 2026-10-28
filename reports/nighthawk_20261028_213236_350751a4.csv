@@ -1,0 +1,2 @@
+host,protocol,port,state,reason,service,version,product,extrainfo
+192.168.111.130,tcp,21,open,syn-ack,ftp,2.3.4,vsftpd,
