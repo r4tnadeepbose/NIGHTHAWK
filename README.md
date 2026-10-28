@@ -1,101 +1,90 @@
 # NIGHTHAWK
 
-## Advanced Network Scanner
+**Advanced Network Scanner — a terminal-style GUI front end for Nmap**
 
-NIGHTHAWK is a dark, terminal-style graphical interface for [Nmap](https://nmap.org/). It provides a convenient way to run common Nmap scan modes, view the exact command being executed, and monitor live scan output without freezing the interface.
+NIGHTHAWK is a dark, terminal-inspired graphical interface for [Nmap](https://nmap.org/). It lets you run common scan modes, see the exact command being executed, watch live output stream into the window, and get automatic HTML/JSON/CSV/TXT reports — all without freezing the UI.
 
-> **Use responsibly:** Only scan systems and networks that you own or have explicit permission to test. Unauthorized scanning may be illegal or disruptive.
+> **Use responsibly.** Only scan systems and networks you own or have explicit written permission to test. Unauthorized scanning may be illegal or disruptive.
 
-## Author
+**Author:** [Ratnadeep Bose](https://github.com/R4tnadeepBose)
 
-Created by [Ratnadeep Bose](https://github.com/R4tnadeepBose).
+---
 
 ## Features
 
-- Dark hacker-style terminal interface.
-- TCP Connect scan.
-- TCP SYN scan.
-- UDP scan.
-- FIN, Xmas, NULL, and ACK scans.
-- Window, Maimon, Ping Discovery, and IP Protocol scans.
-- Service and version detection.
-- Optional OS detection.
-- Custom scan mode with custom flags.
-- Single ports, ranges, and comma-separated port lists.
-- Aggressive Nmap timing profile (`-T5`).
-- Live command output.
-- Visible **COMMAND RUN** field.
-- Animated loading bar while a scan is running.
-- Abort button to stop a running scan.
-- Hover question-mark help for each control.
-- Automatic HTML, JSON, CSV, and TXT reports.
-- Responsive interface while Nmap is working.
+- Dark hacker-style terminal interface
+- Scan types: TCP Connect, TCP SYN, UDP, FIN, Xmas, NULL, ACK, Window, Maimon, Ping Discovery, IP Protocol, and Custom
+- Service/version detection and optional OS detection
+- Custom scan mode for your own flags
+- Single ports, ranges, or comma-separated port lists (`443`, `1-1024`, `22,80,443`)
+- Aggressive `-T5` timing profile
+- Live command output streamed in real time
+- Visible **COMMAND RUN** field showing the assembled command
+- Animated loading bar and an **ABORT** button
+- Per-control help (the `?` button)
+- Automatic HTML, JSON, CSV, and TXT reports
+- Responsive interface while Nmap runs
+
+---
 
 ## How It Works
 
-NIGHTHAWK is a graphical front end for Nmap. It does not reimplement packet
-scanning in Python. Instead, it builds a validated Nmap command from the
-settings selected in the interface and starts Nmap as a separate process.
+NIGHTHAWK is a GUI front end — it does **not** reimplement packet scanning in Python. It builds a validated Nmap command from your settings and runs Nmap as a separate process, streaming its output back into the window.
 
-The scan flow is:
+**Scan flow:**
 
-1. You enter a target and a port expression.
-2. NIGHTHAWK validates the target, port values, and extra options.
+1. Enter a target and port expression.
+2. NIGHTHAWK validates the target, ports, and extra options.
 3. The selected scan type is converted to an Nmap flag.
-4. NIGHTHAWK adds the selected detection options and aggressive timing mode.
-5. The complete command is shown in **COMMAND RUN**.
-6. Nmap performs the scan using its optimized networking engine.
-7. Nmap output is streamed into the NIGHTHAWK terminal window in real time.
-8. The loading bar runs while the scanner process is active.
+4. Selected detection options and `-T5` are appended.
+5. The full command is shown in **COMMAND RUN**.
+6. Nmap performs the scan.
+7. Output streams into the terminal window in real time.
+8. The progress bar runs while the process is active.
 9. XML scan data is converted into portable reports.
-10. **ABORT** terminates the scanner process when you stop the scan.
+10. **ABORT** terminates the Nmap process on demand.
 
 For example, these settings:
 
 ```text
 Scan type: TCP Connect
-Ports: 1 - 1024
+Ports: 1-1024
 Service detection: enabled
 Target: 127.0.0.1
 ```
 
-produce a command similar to:
+produce:
 
 ```text
-nmap -sT -T5 -p 1-1024 -sV 127.0.0.1
+nmap -sT -T5 -sV -p 1-1024 -oX <temp.xml> 127.0.0.1
 ```
 
-NIGHTHAWK starts Nmap with a subprocess argument list rather than passing the
-command through a shell. This keeps command arguments separated when the
-process is started.
+NIGHTHAWK launches Nmap with a subprocess argument list rather than a shell, so arguments stay separated and shell injection is avoided.
+
+---
 
 ## Requirements
 
-- Windows, macOS, or Linux.
-- Python 3.9 or newer.
-- Tkinter (included with most Python installers, but packaged separately on
-  some Linux distributions).
-- Nmap 7.x or newer.
+- Windows, macOS, or Linux
+- Python 3.9+
+- Tkinter (bundled with most Python installers; packaged separately on some Linux distros)
+- Nmap 7.x+
 
-Python's standard library is used, so no `pip install` command is required.
+Only the Python standard library is used — no `pip install` needed.
+
+---
 
 ## Installation
 
 ### 1. Install Python
 
-Download Python from [python.org/downloads](https://www.python.org/downloads/)
-or use your operating system's package manager. During Windows installation,
-enable **Add Python to PATH**.
+Download from [python.org/downloads](https://www.python.org/downloads/) or use your package manager. On Windows, enable **Add Python to PATH** during installation.
 
-Verify Python:
-
-Windows:
+Verify:
 
 ```powershell
 py --version
 ```
-
-macOS or Linux:
 
 ```bash
 python3 --version
@@ -103,121 +92,94 @@ python3 --version
 
 ### 2. Install Nmap
 
-### Windows
+**Windows**
 
 1. Download the installer from [nmap.org/download](https://nmap.org/download.html).
-2. Install Nmap.
-3. During installation, enable the option to add Nmap to `PATH` if available.
-4. Open a new PowerShell window and verify:
+2. Install Nmap (enable the PATH option if offered).
+3. Open a new PowerShell window and verify:
 
    ```powershell
    nmap --version
    ```
 
-If `nmap` is not recognized, add the Nmap installation folder to the Windows `PATH`. The default folder is usually:
+   If `nmap` isn't recognized, add the install folder to `PATH` (usually `C:\Program Files (x86)\Nmap`):
 
-```text
-C:\Program Files (x86)\Nmap
-```
+   ```powershell
+   $env:Path += ";C:\Program Files (x86)\Nmap"
+   ```
 
-You can add the default folder to `PATH` for the current PowerShell session:
-
-```powershell
-$env:Path += ";C:\Program Files (x86)\Nmap"
-```
-
-### Ubuntu or Debian
+**Ubuntu / Debian**
 
 ```bash
 sudo apt update
 sudo apt install nmap python3 python3-tk
 ```
 
-### Fedora
+**Fedora**
 
 ```bash
 sudo dnf install nmap python3 python3-tkinter
 ```
 
-### macOS
-
-With Homebrew:
+**macOS (Homebrew)**
 
 ```bash
-brew install nmap
+brew install nmap python
 ```
 
-Python and Tkinter may also need to be installed separately depending on the
-Python distribution:
-
-```bash
-brew install python
-```
-
-### Arch Linux
+**Arch Linux**
 
 ```bash
 sudo pacman -Syu nmap python tk
 ```
 
-### openSUSE
+**openSUSE**
 
 ```bash
 sudo zypper install nmap python3 python3-tk
 ```
 
-### Alpine Linux
+**Alpine Linux**
 
 ```bash
 apk add nmap python3 py3-tkinter
 ```
 
-If your distribution uses a different package name for Tkinter, search for
-the package containing `tkinter` or `python3-tk`.
+If your distro names the Tkinter package differently, search for `tkinter` or `python3-tk`.
 
 ### 3. Verify Nmap and Tkinter
-
-Verify Nmap:
 
 ```bash
 nmap --version
 ```
 
-Windows PowerShell:
-
 ```powershell
 py -c "import tkinter; print('Tkinter OK')"
 ```
-
-macOS or Linux:
 
 ```bash
 python3 -c "import tkinter; print('Tkinter OK')"
 ```
 
-## Download or Clone
+---
 
-Clone the repository:
+## Download or Clone
 
 ```bash
 git clone https://github.com/r4tnadeepbose/NIGHTHAWK.git
 cd NIGHTHAWK
 ```
 
-You can also download the repository as a ZIP file from
-[NIGHTHAWK on GitHub](https://github.com/r4tnadeepbose/NIGHTHAWK) and extract it.
+Or download the repository as a ZIP from [GitHub](https://github.com/r4tnadeepbose/NIGHTHAWK) and extract it.
 
-## Run NIGHTHAWK on Windows
+---
 
-Open PowerShell in the project directory:
+## Running NIGHTHAWK
+
+**Windows (PowerShell)**
 
 ```powershell
 cd "C:\path\to\nighthawk"
-```
-
-Run with the Python launcher:
-
-```powershell
 py .\scanner.py
 ```
 
@@ -227,193 +189,188 @@ If `py` is unavailable:
 python .\scanner.py
 ```
 
-## Run NIGHTHAWK on macOS
+**macOS**
 
 ```bash
 cd /path/to/nighthawk
 python3 scanner.py
 ```
 
-## Run NIGHTHAWK on Linux
+**Linux**
 
 ```bash
 cd /path/to/nighthawk
 python3 scanner.py
 ```
 
-The script does not need to be installed system-wide. Running it from the
-project directory is enough.
+No system-wide install is required — running from the project directory is enough.
+
+---
 
 ## Using the Application
 
-1. Enter a hostname or IP address in **TARGET**.
-2. Enter one port, a range, or a comma-separated list in **PORTS**:
-   `443`, `1-1024`, or `22,80,443`.
-3. Select a scan type.
-4. Enable **SERVICE / VERSION DETECTION** if required.
+1. Enter a hostname or IP in **TARGET**.
+2. Enter one port, a range, or a list in **PORTS**: `443`, `1-1024`, or `22,80,443`.
+3. Select a **SCAN TYPE**.
+4. Enable **SERVICE / VERSION** if needed.
 5. Enable **OS DETECTION** when appropriate.
-6. Add optional flags in **EXTRA FLAGS**. Select **Custom** to hide the normal
-   scan controls and enter a complete custom flag string in **CUSTOM COMMAND**.
-7. Click **LAUNCH SCAN**.
-8. Review the exact command in **COMMAND RUN** and the live output below it.
-9. Click **ABORT** to stop the scan.
-10. When complete, the HTML report opens in your browser. Reports are saved in
-    the `reports` folder beside `scanner.py`.
+6. Add optional flags in **EXTRA FLAGS**. Select **Custom** to hide standard controls and enter a full flag string in **CUSTOM COMMAND**.
+7. Click **▶ LAUNCH ASSESSMENT**.
+8. Review the exact command in **COMMAND RUN** and the live output below.
+9. Click **■ ABORT** to stop.
+10. When complete, the HTML report opens automatically. Reports are saved in `reports/` beside `scanner.py`.
 
-For a safe local test, use:
+**Safe local test:**
 
 ```text
 Target: 127.0.0.1
-Ports: 1 - 1024
+Ports: 1-1024
 Scan type: TCP Connect
 ```
 
 ### Reports
 
-Each completed scan creates four files with the same timestamp:
+Each completed scan produces four files sharing one timestamp:
 
 ```text
 reports/
-├── nighthawk_YYYYMMDD_HHMMSS.html
-├── nighthawk_YYYYMMDD_HHMMSS.json
-├── nighthawk_YYYYMMDD_HHMMSS.csv
-└── nighthawk_YYYYMMDD_HHMMSS.txt
+├── nighthawk_YYYYMMDD_HHMMSS_<id>.html
+├── nighthawk_YYYYMMDD_HHMMSS_<id>.json
+├── nighthawk_YYYYMMDD_HHMMSS_<id>.csv
+└── nighthawk_YYYYMMDD_HHMMSS_<id>.txt
 ```
 
-The HTML report opens automatically. The report buttons in the application
-open the latest HTML, JSON, CSV, and TXT files.
+The HTML report includes a live filter box for searching host, port, state, or service. The report buttons open the latest HTML, JSON, CSV, or TXT file.
+
+---
 
 ## Example Commands
 
-The GUI builds commands similar to these:
+TCP Connect with service detection:
 
 ```text
-nmap -sT -T5 -p 1-1024 -sV 127.0.0.1
+nmap -sT -T5 -sV -p 1-1024 127.0.0.1
 ```
 
-TCP SYN scan:
+TCP SYN:
 
 ```text
-nmap -sS -T5 -p 1-1024 -sV 192.168.1.1
+nmap -sS -T5 -sV -p 1-1024 192.168.1.1
 ```
 
-UDP scan:
+UDP:
 
 ```text
 nmap -sU -T5 -p 53,123,161 192.168.1.1
 ```
 
-Service and OS detection:
+Service + OS detection:
 
 ```text
-nmap -sT -T5 -p 1-1024 -sV -O 192.168.1.10
+nmap -sT -T5 -sV -O -p 1-1024 192.168.1.10
 ```
 
-NSE script through **EXTRA OPTIONS**:
+NSE script via **EXTRA FLAGS**:
 
 ```text
 --script vuln
 ```
 
-Some scan types, including SYN, UDP, and OS detection, may require Administrator/root privileges.
-
 ### Privilege requirements
 
-- **TCP Connect (`-sT`)** usually works as a normal user.
-- **TCP SYN (`-sS`)** generally requires Administrator/root privileges.
-- **UDP (`-sU`)** can be slow and may require elevated privileges.
-- **FIN, Xmas, NULL, and ACK** scans may require raw packet privileges.
-- **OS detection (`-O`)** commonly requires Administrator/root privileges.
+| Scan | Typical privileges |
+|---|---|
+| TCP Connect (`-sT`) | Normal user |
+| TCP SYN (`-sS`) | Administrator / root |
+| UDP (`-sU`) | May require elevated privileges |
+| FIN / Xmas / NULL / ACK | Often raw-packet privileges |
+| OS detection (`-O`) | Usually Administrator / root |
 
-On Windows, start PowerShell or VS Code as **Administrator** only when an
-authorized scan requires it. On macOS or Linux, use `sudo` only for an
-authorized target and launch the application with the appropriate privileges:
+On Windows, start PowerShell or VS Code as **Administrator** only when an authorized scan needs it. On macOS/Linux, use `sudo` only for authorized targets:
 
 ```bash
 sudo python3 scanner.py
 ```
 
-Do not use elevated privileges unless the selected Nmap scan mode requires
-them.
+Don't elevate unless the chosen scan mode requires it.
 
-## Common Problems
+---
+
+## Troubleshooting
 
 ### `Nmap was not found`
 
-Verify that Nmap is installed and available on `PATH`:
+Confirm Nmap is on `PATH`:
 
 ```powershell
 nmap --version
 ```
 
-After changing `PATH`, restart the terminal or VS Code.
+Restart the terminal or VS Code after changing `PATH`. NIGHTHAWK locates the binary with `shutil.which("nmap")`, so installing Nmap is not enough if the process can't find it.
 
-NIGHTHAWK checks `PATH` with Python's `shutil.which("nmap")`. Installing Nmap
-is not enough if the terminal or VS Code process cannot find the executable.
+### `python` / `python3` is not recognized
 
-### `python` or `python3` is not recognized
-
-Install Python and reopen the terminal. On Windows, try:
+Install Python and reopen the terminal. On Windows try:
 
 ```powershell
 py .\scanner.py
 ```
 
-### The GUI does not open
+### The GUI doesn't open
 
-This normally means Tkinter is missing. Install the Tkinter package listed for
-your operating system above, then repeat the Tkinter verification command.
+Tkinter is likely missing. Install the Tkinter package for your OS (see above), then re-run the verification command.
 
-### Nmap says a scan requires privileges
+### Nmap reports a scan requires privileges
 
-Use the TCP Connect scan as a normal-user test, or rerun the application with
-the required Administrator/root privileges. Only scan systems for which you
-have permission.
+Use TCP Connect for a normal-user test, or rerun with Administrator/root — only for authorized targets.
 
 ### Permission errors
 
-Run the terminal or application with appropriate administrator/root privileges for scans that require raw packet access. Only do this for authorized testing.
+Run the terminal or app with appropriate admin/root privileges only for scans that need raw packet access, and only on authorized systems.
 
-### Tkinter is missing
-
-On Linux, install the Tkinter package for your Python version:
+### Tkinter missing on Linux
 
 ```bash
 sudo apt install python3-tk
 ```
 
-### The scan appears slow
+### The scan is slow
 
-UDP scans and service detection normally take longer than a basic TCP connect scan. Reduce the port range for testing, or disable service and OS detection when they are not needed.
+UDP and service detection are inherently slower than a basic TCP Connect scan. Narrow the port range, or disable service/OS detection when not needed.
 
-## Validate the Python File
+---
 
-Before running, check the script for syntax errors:
+## Validate the Script
 
-### Windows PowerShell
+Before running, check for syntax errors:
 
 ```powershell
 python -m py_compile .\scanner.py
 ```
 
-### macOS or Linux
-
 ```bash
 python3 -m py_compile scanner.py
 ```
+
+---
 
 ## Project Structure
 
 ```text
 .
 ├── scanner.py
-└── README.md
+├── README.md
+└── reports/        (created on first scan)
 ```
+
+---
 
 ## License
 
-Add the license you want to use before publishing the repository. MIT is a common choice for small open-source utilities.
+Add your chosen license before publishing. MIT is a common choice for small open-source utilities.
+
+---
 
 ## Disclaimer
 
-NIGHTHAWK is a front end for Nmap. The author is not responsible for misuse, damage, service interruption, or unauthorized activity. Always obtain written permission before scanning a target you do not own.
+NIGHTHAWK is a front end for Nmap. The author is not responsible for misuse, damage, service interruption, or unauthorized activity. Always obtain written permission before scanning any target you do not own.
