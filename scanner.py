@@ -135,10 +135,22 @@ class NighthawkApp:
         self.stop_btn = self.button(abort_group, "■  ABORT", self.stop_scan, "#3b1b20", self.ERROR)
         self.stop_btn.config(state=tk.DISABLED)
         self.stop_btn.pack(side=tk.LEFT)
+        
         style = ttk.Style()
         style.theme_use("clam")
-        style.configure("Nighthawk.Horizontal.TProgressbar", troughcolor="#05090c",
-                        background=self.ACCENT, bordercolor=self.BG, lightcolor=self.ACCENT, darkcolor=self.ACCENT)
+        style.configure("Nighthawk.Horizontal.TProgressbar", 
+                        troughcolor="#05090c",
+                        background=self.ACCENT,
+                        bordercolor=self.BG,
+                        lightcolor=self.ACCENT, 
+                        darkcolor=self.ACCENT)
+        style.layout("Nighthawk.Horizontal.TProgressbar", [
+            ('Horizontal.Progressbar.trough', {
+                'children': [('Horizontal.Progressbar.pbar', {'side': 'left', 'sticky': 'ns'})],
+                'sticky': 'nswe'
+            })
+        ])
+        
         self.progress = ttk.Progressbar(controls, mode="indeterminate", length=180,
                                         style="Nighthawk.Horizontal.TProgressbar")
         self.progress.pack(side=tk.LEFT, padx=10)
@@ -202,7 +214,7 @@ class NighthawkApp:
             "Attempts operating-system detection and may need administrator/root access.\n\n"
             "REPORTS\n"
             "Completed scans create HTML, JSON, CSV, and TXT files in the reports folder.\n"
-            "The HTML report opens automatically and includes a searchable results table.\n\n"
+            "The HTML report opens automatically and includes search and download options.\n\n"
             "LAUNCH / ABORT\n"
             "Launch starts the assessment. Abort stops the active process.\n\n"
             "COMMAND RUN\n"
@@ -331,8 +343,14 @@ class NighthawkApp:
             self.scan_process = subprocess.Popen(command, stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace", creationflags=flags)
             for line in self.scan_process.stdout:
-                if self.is_scanning:
-                    self.update_ui(self.log, line.rstrip())
+                if not self.is_scanning:
+                    continue
+                stripped = line.strip()
+                if (stripped.startswith("Starting Nmap")
+                        or stripped.startswith("Nmap done")
+                        or stripped.startswith("Nmap scan report for")):
+                    continue
+                self.update_ui(self.log, line.rstrip())
             code = self.scan_process.wait()
         except OSError as error:
             self.update_ui(self.log, f"[ERROR] Could not start scanner: {error}")
@@ -387,12 +405,18 @@ class NighthawkApp:
     def write_reports(self, base, host, ports, records):
         data = {"target": host, "ports": ports, "created": datetime.datetime.now().isoformat(), "results": records}
         base.with_suffix(".json").write_text(json.dumps(data, indent=2), encoding="utf-8")
+        
         with base.with_suffix(".csv").open("w", newline="", encoding="utf-8") as file:
             writer = csv.DictWriter(file, fieldnames=["host", "protocol", "port", "state", "reason", "service", "version"])
             writer.writeheader()
             writer.writerows({key: self.safe_csv_value(value) for key, value in row.items()} for row in records)
-        base.with_suffix(".txt").write_text("\n".join(f"{r['host']}:{r['port']}/{r['protocol']} {r['state']} {r['service']} {r['version']}" for r in records), encoding="utf-8")
+            
+        txt_content = "\n".join(f"{r['host']}:{r['port']}/{r['protocol']} {r['state']} {r['service']} {r['version']}" for r in records)
+        base.with_suffix(".txt").write_text(txt_content, encoding="utf-8")
+        
         rows = "".join("<tr>" + "".join(f"<td>{html.escape(str(r[key]))}</td>" for key in ("host", "protocol", "port", "state", "service", "version")) + "</tr>" for r in records)
+        
+        # Generates the HTML with embedded download buttons mimicking the desktop UI
         page = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -401,19 +425,52 @@ class NighthawkApp:
 <title>NIGHTHAWK Report</title>
 <style>
 body {{ background:#091017; color:#b8f7d4; font:15px Consolas,monospace; padding:30px }}
-h1 {{ color:#20e08a }} input {{ background:#111e29; border:1px solid #28536a;
-color:#b8f7d4; padding:10px; width: min(520px, 90%); margin-bottom:18px }}
-table {{ border-collapse:collapse; width:100% }} td,th {{ border:1px solid #28536a;
-padding:8px; text-align:left }} th {{ color:#20e08a }} tr:nth-child(even) {{ background:#111e29 }}
+h1 {{ color:#20e08a; margin-bottom: 5px; }}
+.controls {{ margin: 20px 0; display: flex; gap: 10px; flex-wrap: wrap; }}
+input {{ background:#111e29; border:1px solid #28536a; color:#b8f7d4; padding:10px; width: min(520px, 100%); flex-grow: 1; }}
+button {{ background:#19364a; color:#20e08a; border:none; padding:10px 20px; font-family:Consolas,monospace; font-weight:bold; cursor:pointer; transition: 0.2s; }}
+button:hover {{ background:#28536a; }}
+table {{ border-collapse:collapse; width:100%; margin-top:10px; }} 
+td,th {{ border:1px solid #28536a; padding:8px; text-align:left; }} 
+th {{ color:#20e08a; }} 
+tr:nth-child(even) {{ background:#111e29 }}
 </style>
 </head>
 <body>
 <h1>NIGHTHAWK // Scan Report</h1>
 <p>Target: {html.escape(host)} | Ports: {html.escape(ports)}</p>
-<input id="filter" type="search" placeholder="Filter host, port, state, or service...">
-<table id="results"><thead><tr><th>Host</th><th>Protocol</th><th>Port</th>
-<th>State</th><th>Service</th><th>Version</th></tr></thead><tbody>{rows}</tbody></table>
+
+<div class="controls">
+  <button onclick="downloadFile('json')">EXPORT JSON</button>
+  <button onclick="downloadFile('csv')">EXPORT CSV</button>
+  <button onclick="downloadFile('txt')">EXPORT TXT</button>
+  <input id="filter" type="search" placeholder="Filter host, port, state, or service...">
+</div>
+
+<table id="results">
+<thead><tr><th>Host</th><th>Protocol</th><th>Port</th><th>State</th><th>Service</th><th>Version</th></tr></thead>
+<tbody>{rows}</tbody>
+</table>
+
 <script>
+const reportData = {{
+  json: {json.dumps(data)},
+  csv: {json.dumps(base.with_suffix(".csv").read_text(encoding="utf-8"))},
+  txt: {json.dumps(txt_content)}
+}};
+
+function downloadFile(ext) {{
+  const blob = new Blob([reportData[ext]], {{ type: 'text/plain' }});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '{base.name}.' + ext;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}}
+
 document.getElementById("filter").addEventListener("input", function () {{
   const query = this.value.toLowerCase();
   document.querySelectorAll("#results tbody tr").forEach(function (row) {{
@@ -434,7 +491,8 @@ document.getElementById("filter").addEventListener("input", function () {{
         return text
 
     def display_command(self, command):
-        return subprocess.list2cmdline(["nighthawk", *command[1:]])
+        display_cmd = ["NIGHTHAWK", *command[1:]]
+        return subprocess.list2cmdline(display_cmd)
 
     def clear_output(self):
         self.output.config(state=tk.NORMAL)
