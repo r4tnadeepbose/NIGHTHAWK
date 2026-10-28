@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NIGHTHAWK Report</title>
+<style>
+body { background:#091017; color:#b8f7d4; font:15px Consolas,monospace; padding:30px }
+h1 { color:#20e08a } input { background:#111e29; border:1px solid #28536a;
+color:#b8f7d4; padding:10px; width: min(520px, 90%); margin-bottom:18px }
+table { border-collapse:collapse; width:100% } td,th { border:1px solid #28536a;
+padding:8px; text-align:left } th { color:#20e08a } tr:nth-child(even) { background:#111e29 }
+</style>
+</head>
+<body>
+<h1>NIGHTHAWK // Scan Report</h1>
+<p>Target: 192.168.111.130 | Ports: 1-1024</p>
+<input id="filter" type="search" placeholder="Filter host, port, state, or service...">
+<table id="results"><thead><tr><th>Host</th><th>Protocol</th><th>Port</th>
+<th>State</th><th>Service</th><th>Version</th></tr></thead><tbody><tr><td>192.168.111.130</td><td>tcp</td><td>21</td><td>open</td><td>ftp</td><td>2.3.4</td></tr><tr><td>192.168.111.130</td><td>tcp</td><td>22</td><td>open</td><td>ssh</td><td>4.7p1 Debian 8ubuntu1</td></tr><tr><td>192.168.111.130</td><td>tcp</td><td>23</td><td>open</td><td>telnet</td><td></td></tr><tr><td>192.168.111.130</td><td>tcp</td><td>25</td><td>open</td><td>smtp</td><td></td></tr><tr><td>192.168.111.130</td><td>tcp</td><td>53</td><td>open</td><td>domain</td><td>9.4.2</td></tr><tr><td>192.168.111.130</td><td>tcp</td><td>80</td><td>open</td><td>http</td><td>2.2.8</td></tr><tr><td>192.168.111.130</td><td>tcp</td><td>111</td><td>open</td><td>rpcbind</td><td>2</td></tr><tr><td>192.168.111.130</td><td>tcp</td><td>139</td><td>open</td><td>netbios-ssn</td><td>3.X - 4.X</td></tr><tr><td>192.168.111.130</td><td>tcp</td><td>445</td><td>open</td><td>netbios-ssn</td><td>3.X - 4.X</td></tr><tr><td>192.168.111.130</td><td>tcp</td><td>512</td><td>open</td><td>exec</td><td></td></tr><tr><td>192.168.111.130</td><td>tcp</td><td>513</td><td>open</td><td>login</td><td></td></tr><tr><td>192.168.111.130</td><td>tcp</td><td>514</td><td>open</td><td>tcpwrapped</td><td></td></tr></tbody></table>
+<script>
+document.getElementById("filter").addEventListener("input", function () {
+  const query = this.value.toLowerCase();
+  document.querySelectorAll("#results tbody tr").forEach(function (row) {
+    row.hidden = !row.textContent.toLowerCase().includes(query);
+  });
+});
+</script>
+</body>
+</html>

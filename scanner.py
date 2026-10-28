@@ -3,12 +3,14 @@ import datetime
 import html
 import json
 import os
+import re
 import shlex
 import shutil
 import subprocess
 import tempfile
 import threading
 import tkinter as tk
+import uuid
 import webbrowser
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -23,6 +25,14 @@ class NighthawkApp:
     ACCENT = "#20e08a"
     WARN = "#ffcc66"
     ERROR = "#ff6b6b"
+    MAX_TARGET_LENGTH = 253
+    MAX_PORT_EXPRESSION_LENGTH = 256
+    MAX_CUSTOM_FLAGS_LENGTH = 2048
+    MAX_REPORT_XML_BYTES = 25 * 1024 * 1024
+    BLOCKED_CUSTOM_FLAGS = {
+        "-il", "-ir", "--datadir", "--stylesheet", "--webxml",
+        "--resume", "--append-output", "-on", "-ox", "-og", "-oa",
+    }
 
     SCAN_TYPES = {
         "TCP Connect": ("-sT", "Completes a TCP connection; works without administrator privileges."),
@@ -232,7 +242,7 @@ class NighthawkApp:
         host = self.target_entry.get().strip()
         ports = self.port_entry.get().strip()
         engine = shutil.which("nmap")
-        if not host or not ports:
+        if not self.valid_target(host) or not ports:
             messagebox.showerror("NIGHTHAWK", "Target and port expression are required.")
             return
         if engine is None:
@@ -242,7 +252,8 @@ class NighthawkApp:
             messagebox.showerror("NIGHTHAWK", "Use ports like 443, 1-1024, or 22,80,443.")
             return
         try:
-            flags = shlex.split(self.custom_entry.get() if self.scan_type.get() == "Custom" else self.extra_entry.get(), posix=False)
+            flags_text = self.custom_entry.get() if self.scan_type.get() == "Custom" else self.extra_entry.get()
+            flags = self.parse_flags(flags_text)
         except ValueError as error:
             messagebox.showerror("NIGHTHAWK", f"Invalid custom flags: {error}")
             return
@@ -272,8 +283,13 @@ class NighthawkApp:
 
     @staticmethod
     def valid_ports(expression):
+        if not expression or len(expression) > NighthawkApp.MAX_PORT_EXPRESSION_LENGTH:
+            return False
         try:
             for part in expression.split(","):
+                part = part.strip()
+                if not part:
+                    return False
                 if "-" in part:
                     start, end = (int(value) for value in part.split("-", 1))
                     if not 1 <= start <= end <= 65535:
@@ -283,6 +299,25 @@ class NighthawkApp:
             return bool(expression)
         except ValueError:
             return False
+
+    @classmethod
+    def valid_target(cls, target):
+        if not target or len(target) > cls.MAX_TARGET_LENGTH:
+            return False
+        if target.startswith("-") or any(ord(char) < 32 or char.isspace() for char in target):
+            return False
+        return bool(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9.:%_-]*", target))
+
+    @classmethod
+    def parse_flags(cls, text):
+        if len(text) > cls.MAX_CUSTOM_FLAGS_LENGTH:
+            raise ValueError("custom flags are too long")
+        flags = shlex.split(text, posix=False)
+        for flag in flags:
+            option = flag.split("=", 1)[0].casefold()
+            if option in cls.BLOCKED_CUSTOM_FLAGS or option.startswith(("-on", "-ox", "-og", "-oa", "-il", "-ir")):
+                raise ValueError(f"{flag} is reserved by NIGHTHAWK")
+        return flags
 
     def xml_path(self):
         handle, path = tempfile.mkstemp(suffix=".xml", prefix="nighthawk_")
@@ -306,13 +341,19 @@ class NighthawkApp:
         if self.is_scanning and code == 0:
             self.update_ui(self.create_reports, host, ports)
         elif self.is_scanning:
+            if self.current_xml_path is not None:
+                self.current_xml_path.unlink(missing_ok=True)
             self.update_ui(self.finish_scan, f"EXIT CODE {code}")
+        elif self.current_xml_path is not None:
+            self.current_xml_path.unlink(missing_ok=True)
 
     def create_reports(self, host, ports):
         try:
             if self.current_xml_path is None:
                 raise OSError("No report data path was created")
             xml_file = self.current_xml_path
+            if xml_file.stat().st_size > self.MAX_REPORT_XML_BYTES:
+                raise OSError("scan report is larger than the 25 MB safety limit")
             root = ET.parse(xml_file).getroot()
             records = []
             for host_node in root.findall("host"):
@@ -333,7 +374,7 @@ class NighthawkApp:
             folder = Path(__file__).with_name("reports")
             folder.mkdir(exist_ok=True)
             stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            base = folder / f"nighthawk_{stamp}"
+            base = folder / f"nighthawk_{stamp}_{uuid.uuid4().hex[:8]}"
             self.last_report = self.write_reports(base, host, ports, records)
             xml_file.unlink(missing_ok=True)
             self.update_ui(self.log, f"[+] Reports saved: {base}.html / .json / .csv / .txt")
@@ -349,7 +390,7 @@ class NighthawkApp:
         with base.with_suffix(".csv").open("w", newline="", encoding="utf-8") as file:
             writer = csv.DictWriter(file, fieldnames=["host", "protocol", "port", "state", "reason", "service", "version"])
             writer.writeheader()
-            writer.writerows(records)
+            writer.writerows({key: self.safe_csv_value(value) for key, value in row.items()} for row in records)
         base.with_suffix(".txt").write_text("\n".join(f"{r['host']}:{r['port']}/{r['protocol']} {r['state']} {r['service']} {r['version']}" for r in records), encoding="utf-8")
         rows = "".join("<tr>" + "".join(f"<td>{html.escape(str(r[key]))}</td>" for key in ("host", "protocol", "port", "state", "service", "version")) + "</tr>" for r in records)
         page = f"""<!doctype html>
@@ -384,6 +425,13 @@ document.getElementById("filter").addEventListener("input", function () {{
 </html>"""
         base.with_suffix(".html").write_text(page, encoding="utf-8")
         return base.with_suffix(".html")
+
+    @staticmethod
+    def safe_csv_value(value):
+        text = str(value)
+        if text.startswith(("=", "+", "-", "@")):
+            return "'" + text
+        return text
 
     def display_command(self, command):
         return subprocess.list2cmdline(["nighthawk", *command[1:]])
