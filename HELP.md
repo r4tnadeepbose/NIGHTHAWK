@@ -40,9 +40,9 @@ sudo -E ./scanner.py
 ## Workflow
 
 1. Start NIGHTHAWK and enter a hostname, IP address, CIDR range, or target list.
-2. Select a scan type, ports, optional service/OS detection, and scripts.
-3. Choose **LAUNCH** and read the live Nmap output.
-4. Open or export the completed reports, or compare JSON reports in the scan history.
+2. Select a scan type, ports, and any detection, script, or output options.
+3. Choose **START SCAN** and follow the live output tab.
+4. Review the overview, ports, and scripts tabs, then open or export the reports.
 
 ## Reports
 
@@ -51,6 +51,18 @@ Reports are written beneath `./reports/`, with a shared timestamp and scan ident
 ```text
 ./reports/nighthawk_YYYYMMDD_HHMMSS_<id>.{html,json,csv,txt}
 ```
+
+## Dashboard tabs
+
+| Tab | Purpose |
+|---|---|
+| Overview | Target facts, risk gauge and legend, service mix, recommendations |
+| Ports & Services | Search, state filter, sortable columns, row copy |
+| Scripts | NSE findings list with a detail pane |
+| Live output | Command preview, timer, streaming log, log tools |
+| Export | Format cards, recent reports, folder shortcuts |
+
+Keyboard shortcuts: `Ctrl+1…5` tabs, `Ctrl+R` scan, `Ctrl+.` stop, `Ctrl+L` port filter, `Ctrl+T` theme, `Ctrl+H` history.
 
 ## Privileges
 
@@ -70,6 +82,7 @@ Reports are written beneath `./reports/`, with a shared timestamp and scan ident
 |---|---|
 | `nmap` not found | Install Nmap, then confirm with `nmap --version`. |
 | `No module named tkinter` | Install `python3-tk`, then rerun `./requirements.txt`. |
+| `No module named nighthawk_app` | Run `./scanner.py` from the project root (the package sits beside it). |
 | GUI does not open under `sudo` | Use `sudo -E ./scanner.py` from your graphical terminal. |
 | A privileged scan fails | Relaunch with `sudo -E` if you are authorized to use that scan type. |
 | No report appears | Wait for the scan to complete and confirm the working directory is writable. |

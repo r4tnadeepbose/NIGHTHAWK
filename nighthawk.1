@@ -1,4 +1,4 @@
-.TH NIGHTHAWK 1 "October 2026" "NIGHTHAWK 2.0.0" "User Commands"
+.TH NIGHTHAWK 1 "November 2026" "NIGHTHAWK 3.0.0" "User Commands"
 .SH NAME
 nighthawk \- graphical Nmap front end
 .SH SYNOPSIS
@@ -10,7 +10,7 @@ nighthawk \- graphical Nmap front end
 .RI [ --help | -h ]
 .RI [ --version | -V ]
 .SH DESCRIPTION
-NIGHTHAWK is a Tkinter graphical interface for Nmap. It builds validated Nmap commands, streams scan output, and creates HTML, JSON, CSV, and text reports.
+NIGHTHAWK is a Tkinter graphical interface for Nmap. It builds validated Nmap commands, streams scan output, offers overview, port, script, live, and export tabs, and creates HTML, JSON, CSV, and text reports.
 .SH OPTIONS
 .TP
 .BR -h , " --help"
@@ -38,7 +38,10 @@ For authorized scan modes requiring raw-packet privileges, preserve the display 
 Generated reports.
 .TP
 .I ./scanner.py
-The graphical application.
+Tiny launcher for the application package.
+.TP
+.I ./nighthawk_app/
+Application package (scanning, reports, theme, and user-interface modules).
 .TP
 .I ./requirements.txt
 Prerequisite checker and installer.
