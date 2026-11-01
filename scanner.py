@@ -56,38 +56,40 @@ class NighthawkApp:
     """Store the application state and all user-interface actions in one class."""
 
     # -----------------------------------------------------------------------
-    # COLOR PALETTES — "dark" is the SOC look, "light" is the daylight variant.
+    # COLOR PALETTES — muted terminal look.
+    #   dark  → charcoal black with a dim phosphor green accent.
+    #   light → warm parchment with an ink-brown and moss-green accent.
     # Switching themes remaps the whole widget tree (see _apply_v2_palette).
     # -----------------------------------------------------------------------
     PALETTES = {
         "dark": {
-            "BG": "#000000", "PANEL": "#171717", "PANEL2": "#101010",
-            "PANEL3": "#202020", "BORDER": "#333333", "BORDER2": "#1f1f1f",
-            "FG": "#f5f7fa", "MUTED": "#a6adb8", "ACCENT": "#3595F9",
-            "ACCENT_HOVER": "#5A89C9", "WARN": "#FEDD0B", "ERROR": "#E05263",
-            "ORANGE": "#F2994A", "CRITICAL": "#7A1E30", "HEALTHY": "#27AE60",
-            "SELECT": "#263B54",
+            "BG": "#0e100f", "PANEL": "#151815", "PANEL2": "#111311",
+            "PANEL3": "#1c201c", "BORDER": "#2b312b", "BORDER2": "#1e231e",
+            "FG": "#d9d7cc", "MUTED": "#8b9186", "ACCENT": "#9db88f",
+            "ACCENT_HOVER": "#b3c9a6", "WARN": "#c4a35f", "ERROR": "#b46a5e",
+            "ORANGE": "#bd8a58", "CRITICAL": "#7b3a34", "HEALTHY": "#7f9c6f",
+            "SELECT": "#232a24", "ON_ACCENT": "#101410",
         },
         "light": {
-            "BG": "#eef3f9", "PANEL": "#ffffff", "PANEL2": "#f6f9fc",
-            "PANEL3": "#e3ecf6", "BORDER": "#c3d3e4", "BORDER2": "#d7e3ef",
-            "FG": "#13273d", "MUTED": "#5c7691", "ACCENT": "#1f6feb",
-            "ACCENT_HOVER": "#4a8df0", "WARN": "#a87b00", "ERROR": "#c73a4d",
-            "ORANGE": "#b85f16", "CRITICAL": "#8c1f33", "HEALTHY": "#1d8a52",
-            "SELECT": "#cfe3fb",
+            "BG": "#e8e1d3", "PANEL": "#f3eee3", "PANEL2": "#ece5d8",
+            "PANEL3": "#ded6c6", "BORDER": "#c9bea8", "BORDER2": "#d6cdba",
+            "FG": "#2b2721", "MUTED": "#6e6659", "ACCENT": "#4f6b4a",
+            "ACCENT_HOVER": "#5e7c58", "WARN": "#8a6a2b", "ERROR": "#9a4a3e",
+            "ORANGE": "#97693a", "CRITICAL": "#6d312b", "HEALTHY": "#55744f",
+            "SELECT": "#dcd4c3", "ON_ACCENT": "#f4efe4",
         },
     }
 
-    BG = "#000000"        # Main background (pure black).
-    PANEL = "#171717"     # Panel background (very dark gray).
-    FG = "#f5f7fa"        # Main foreground text (almost white).
-    MUTED = "#a6adb8"     # Secondary/muted text (gray).
-    ACCENT = "#3595F9"    # Accent/primary color (blue) — buttons, highlights.
-    WARN = "#FEDD0B"      # Warning color (yellow).
-    ERROR = "#E05263"     # Error color (red-pink).
-    ORANGE = "#F2994A"    # "Review" risk color (orange).
-    CRITICAL = "#7A1E30"  # Critical risk color (dark maroon).
-    HEALTHY = "#27AE60"   # Healthy/safe color (green).
+    BG = "#0e100f"        # Main background (charcoal black).
+    PANEL = "#151815"     # Panel background (dark gray-green).
+    FG = "#d9d7cc"        # Main foreground text (warm bone).
+    MUTED = "#8b9186"     # Secondary/muted text (sage gray).
+    ACCENT = "#9db88f"    # Accent/primary color (dim phosphor green).
+    WARN = "#c4a35f"      # Warning color (dim brass).
+    ERROR = "#b46a5e"     # Error color (muted brick).
+    ORANGE = "#bd8a58"    # "Review" risk color (dim amber).
+    CRITICAL = "#7b3a34"  # Critical risk color (deep oxblood).
+    HEALTHY = "#7f9c6f"   # Healthy/safe color (moss green).
 
     # -----------------------------------------------------------------------
     # INPUT LIMITS — Maximum lengths allowed for user input.
@@ -184,7 +186,8 @@ class NighthawkApp:
     def __init__(self, root):
         """Save the main Tkinter window, load saved choices, then build the screen."""
         self.root = root                                   # The main window.
-        self.dark = True                                   # Active color theme.
+        self.config = self.load_config()                    # Load saved preferences.
+        self.dark = self.config.get("theme", "dark") != "light"  # Active color theme.
         self._apply_palette_attrs()                        # Copy palette colors onto self.
         self.root.title("NIGHTHAWK // Advanced Network Scanner")
         self.root.geometry("1150x850")                     # Initial window size.
@@ -198,7 +201,6 @@ class NighthawkApp:
         self.current_xml_path = None                        # Path to the temporary XML file.
         self.live_host_info = {"mac": "Scanning...", "os": "Scanning..."}  # Live MAC/OS.
 
-        self.config = self.load_config()                    # Load saved preferences.
         self.build_ui()                                     # Build the screen.
 
     # -----------------------------------------------------------------------
@@ -214,8 +216,10 @@ class NighthawkApp:
         self.dark = not self.dark
         self._apply_palette_attrs()
         self._apply_v2_palette()
+        self.config["theme"] = "dark" if self.dark else "light"
+        self.save_config()
         if hasattr(self, "theme_btn"):
-            self.theme_btn.configure(text="☀  LIGHT" if self.dark else "☾  DARK")
+            self.theme_btn.configure(text="LIGHT" if self.dark else "DARK")
 
     # -----------------------------------------------------------------------
     # load_config — Read saved preferences from disk.
