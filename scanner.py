@@ -2262,7 +2262,7 @@ document.getElementById("filter").addEventListener("input", function () {{
             state = html.escape(str(record.get("state", "")))
             state_class = "state-open" if state == "open" else "state-other"
             rows.append(
-                "<tr><td>{}</td><td class='{}'>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(
+                "<tr><td class='mono'>{}</td><td class='{}'>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(
                     html.escape(f"{record.get('port', '')}/{record.get('protocol', '')}"),
                     state_class, state,
                     html.escape(str(record.get("service", "") or "—")),
@@ -2286,8 +2286,9 @@ document.getElementById("filter").addEventListener("input", function () {{
         if not script_blocks:
             script_blocks.append("<p class='empty'>No Nmap script output was returned for this scan.</p>")
 
-        # Build the metadata rows (Target, MAC, OS, Distance).
+        # Build the metadata rows (target, ports, MAC, OS, distance).
         metadata = (("Target", data.get("target", "Unknown")),
+                    ("Port range", data.get("ports", "Unknown")),
                     ("MAC address", info.get("mac", "Unknown")),
                     ("Operating system", info.get("os", "Unknown")),
                     ("Network distance", info.get("distance", "Unknown")))
@@ -2297,46 +2298,164 @@ document.getElementById("filter").addEventListener("input", function () {{
             ) for label, value in metadata
         )
 
-        # Assemble the final HTML document (f-string with CSS/JS embedded).
+        # Theme variables come straight from the desktop palettes so both
+        # surfaces stay in sync.
+        dark, light = self.PALETTES["dark"], self.PALETTES["light"]
+        saved_at = html.escape(str(data.get("created", "")).replace("T", " ")[:19] or "—")
+
+        css = f"""
+:root {{ color-scheme:dark;
+  --bg:{dark['BG']}; --panel:{dark['PANEL']}; --panel-2:{dark['PANEL2']}; --panel-3:{dark['PANEL3']};
+  --line:{dark['BORDER']}; --line-soft:{dark['BORDER2']}; --text:{dark['FG']}; --muted:{dark['MUTED']};
+  --accent:{dark['ACCENT']}; --accent-hover:{dark['ACCENT_HOVER']}; --on-accent:{dark['ON_ACCENT']};
+  --warn:{dark['WARN']}; --error:{dark['ERROR']}; --healthy:{dark['HEALTHY']}; --orange:{dark['ORANGE']}; --critical:{dark['CRITICAL']}; }}
+html[data-theme="light"] {{ color-scheme:light;
+  --bg:{light['BG']}; --panel:{light['PANEL']}; --panel-2:{light['PANEL2']}; --panel-3:{light['PANEL3']};
+  --line:{light['BORDER']}; --line-soft:{light['BORDER2']}; --text:{light['FG']}; --muted:{light['MUTED']};
+  --accent:{light['ACCENT']}; --accent-hover:{light['ACCENT_HOVER']}; --on-accent:{light['ON_ACCENT']};
+  --warn:{light['WARN']}; --error:{light['ERROR']}; --healthy:{light['HEALTHY']}; --orange:{light['ORANGE']}; --critical:{light['CRITICAL']}; }}
+* {{ box-sizing:border-box; }}
+body {{ margin:0; background:var(--bg); color:var(--text); font:14px/1.55 "Segoe UI",system-ui,sans-serif; }}
+.topbar {{ display:flex; align-items:center; gap:14px; padding:14px max(24px,calc((100vw - 1480px)/2)); background:var(--panel); border-bottom:1px solid var(--line); }}
+.mark {{ display:grid; place-items:center; }}
+.mark img {{ width:38px; height:38px; object-fit:contain; filter:grayscale(.7) sepia(.12); }}
+.brand {{ color:var(--accent); font:700 15px/1 "Consolas",ui-monospace,monospace; letter-spacing:.14em; }}
+.brand small {{ display:block; margin-top:5px; color:var(--muted); font:600 9px/1 "Consolas",ui-monospace,monospace; letter-spacing:.16em; }}
+.status {{ margin-left:auto; padding:5px 9px; border:1px solid var(--line); color:var(--accent); font:700 10px "Consolas",ui-monospace,monospace; letter-spacing:.12em; }}
+.theme-toggle {{ border:1px solid var(--line); background:transparent; color:var(--muted); padding:7px 11px; font:700 10px "Consolas",ui-monospace,monospace; letter-spacing:.1em; cursor:pointer; }}
+.theme-toggle:hover, .theme-toggle:focus-visible {{ border-color:var(--accent); color:var(--accent); outline:none; }}
+main {{ max-width:1480px; margin:0 auto; padding:30px 24px 44px; }}
+h1 {{ margin:0; font:700 24px/1.2 "Consolas",ui-monospace,monospace; letter-spacing:.02em; }}
+.sub {{ margin:8px 0 24px; color:var(--muted); font-size:13px; }}
+.sub strong {{ color:var(--text); font-weight:600; }}
+.summary {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px; }}
+.card, .panel {{ background:var(--panel); border:1px solid var(--line); }}
+.card {{ padding:13px 15px; }}
+.card span {{ display:block; color:var(--muted); font:700 10px "Consolas",ui-monospace,monospace; letter-spacing:.12em; text-transform:uppercase; }}
+.card strong {{ display:block; margin-top:7px; color:var(--text); font:700 22px "Consolas",ui-monospace,monospace; overflow-wrap:anywhere; }}
+.card.good strong {{ color:var(--healthy); }} .card.warn strong {{ color:var(--warn); }} .card.bad strong {{ color:var(--error); }}
+.grid {{ display:grid; grid-template-columns:1.05fr 1fr; gap:14px; margin-bottom:14px; }}
+.panel-title {{ margin:0; padding:12px 15px; border-bottom:1px solid var(--line); color:var(--muted); font:700 11px "Consolas",ui-monospace,monospace; letter-spacing:.14em; text-transform:uppercase; }}
+.metadata {{ padding:4px 15px; }}
+.meta {{ display:grid; grid-template-columns:150px 1fr; gap:12px; padding:10px 0; border-bottom:1px solid var(--line-soft); font-size:13px; }}
+.meta:last-child {{ border-bottom:0; }} .meta span {{ color:var(--muted); }} .meta strong {{ font-weight:600; overflow-wrap:anywhere; }}
+.risk {{ display:flex; align-items:center; gap:20px; padding:20px 16px; }}
+.risk-badge {{ flex:0 0 auto; min-width:112px; padding:16px 12px; border:2px solid currentColor; text-align:center; font:700 12px "Consolas",ui-monospace,monospace; letter-spacing:.1em; }}
+.risk-badge small {{ display:block; margin-top:6px; color:var(--muted); font:400 9px "Consolas",ui-monospace,monospace; letter-spacing:.08em; }}
+.risk p {{ margin:0; color:var(--muted); font-size:13px; }}
+.risk-counts {{ display:block; margin-top:8px; color:var(--text); }}
+.risk-critical {{ color:var(--critical); }} .risk-high {{ color:var(--error); }} .risk-review {{ color:var(--orange); }} .risk-exposed {{ color:var(--warn); }} .risk-clear {{ color:var(--healthy); }}
+.toolbar {{ display:flex; align-items:center; gap:8px; padding:12px 15px; border-bottom:1px solid var(--line); flex-wrap:wrap; }}
+button.action {{ border:1px solid var(--line); background:transparent; color:var(--text); padding:8px 12px; font:700 10px "Consolas",ui-monospace,monospace; letter-spacing:.08em; cursor:pointer; }}
+button.action:hover, button.action:focus-visible {{ border-color:var(--accent); color:var(--accent); outline:none; }}
+input#filter {{ margin-left:auto; min-width:260px; background:var(--panel-2); color:var(--text); border:1px solid var(--line); padding:8px 10px; font:13px "Segoe UI",system-ui,sans-serif; }}
+input#filter::placeholder {{ color:var(--muted); }} input#filter:focus {{ outline:none; border-color:var(--accent); }}
+.table-wrap {{ overflow-x:auto; }}
+table {{ width:100%; border-collapse:collapse; }}
+th, td {{ padding:11px 15px; text-align:left; border-bottom:1px solid var(--line-soft); font-size:13px; }}
+th {{ background:var(--panel-3); color:var(--muted); font:700 10px "Consolas",ui-monospace,monospace; letter-spacing:.12em; text-transform:uppercase; }}
+tbody tr:hover td {{ background:var(--panel-2); }}
+.mono, .state-open {{ font-family:"Consolas",ui-monospace,monospace; }}
+.state-open {{ color:var(--healthy); font-weight:700; }} .state-other {{ color:var(--warn); }}
+.scripts {{ margin-top:14px; }}
+.script {{ margin:14px 15px; border:1px solid var(--line); background:var(--panel-2); }}
+.script header {{ padding:9px 11px; border-bottom:1px solid var(--line); color:var(--accent); font:700 10px "Consolas",ui-monospace,monospace; letter-spacing:.06em; }}
+pre {{ margin:0; padding:13px; overflow:auto; white-space:pre-wrap; color:var(--text); font:12px/1.5 "Consolas",ui-monospace,monospace; }}
+.empty {{ margin:0; padding:20px 15px; color:var(--muted); text-align:center; font-size:13px; }}
+footer {{ max-width:1480px; margin:0 auto; padding:0 24px 28px; color:var(--muted); font:10px "Consolas",ui-monospace,monospace; letter-spacing:.1em; text-transform:uppercase; }}
+@media (max-width:900px) {{ main {{ padding:20px 14px 32px; }} .summary {{ grid-template-columns:1fr 1fr; }} .grid {{ display:block; }} .grid > .panel {{ margin-bottom:14px; }} .meta {{ grid-template-columns:120px 1fr; }} input#filter {{ width:100%; margin-left:0; min-width:0; }} footer {{ padding:0 14px 22px; }} }}
+"""
+
+        # Inline script in <head> applies the saved theme before first paint.
+        head_js = "<script>try{document.documentElement.dataset.theme=localStorage.getItem('nighthawk-theme')||'dark';}catch(e){document.documentElement.dataset.theme='dark';}</script>"
+
+        # The data + behaviour block is assembled separately so the markup
+        # below stays free of escaped JS braces.
+        report_js = (
+            "<script>\nconst reportData = {json:" + json.dumps(data)
+            + ",csv:" + json.dumps(base.with_suffix(".csv").read_text(encoding="utf-8"))
+            + ",txt:" + json.dumps(base.with_suffix(".txt").read_text(encoding="utf-8"))
+            + "};\n"
+            + "function downloadFile(ext){const blob=new Blob([typeof reportData[ext]==='string'?reportData[ext]:JSON.stringify(reportData[ext],null,2)],{type:'text/plain'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='" + base.name + ".'+ext;link.click();URL.revokeObjectURL(url);}\n"
+            + "const themeButton=document.getElementById('theme-toggle');\n"
+            + "function syncThemeButton(){const light=document.documentElement.dataset.theme==='light';themeButton.textContent=light?'Dark':'Light';themeButton.setAttribute('aria-pressed',String(light));}\n"
+            + "themeButton.addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=next;try{localStorage.setItem('nighthawk-theme',next);}catch(error){}syncThemeButton();});\n"
+            + "syncThemeButton();\n"
+            + "document.getElementById('filter').addEventListener('input',function(){const query=this.value.toLowerCase();document.querySelectorAll('#results tbody tr').forEach(function(row){row.hidden=!row.textContent.toLowerCase().includes(query);});});\n"
+            + "</script>"
+        )
+
+        script_section = "" if not scripts else "".join(script_blocks)
+
+        # Assemble the final HTML document.
         return f"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>NIGHTHAWK 2.0.0 — Scan report</title>
-<style>
-:root {{ color-scheme: dark; --bg:#000000; --panel:#171717; --panel-2:#202020; --line:#353535; --text:#f5f7fa; --muted:#a6adb8; --primary:#3595F9; --green:#27AE60; --yellow:#FEDD0B; --orange:#F2994A; --red:#E05263; --maroon:#7A1E30; }}
-* {{ box-sizing:border-box; }} body {{ margin:0; background:var(--bg); color:var(--text); font:14px/1.45 "Segoe UI",system-ui,sans-serif; }}
-.topbar {{ display:flex; align-items:center; gap:14px; padding:16px max(24px,calc((100vw - 1500px)/2)); border-bottom:1px solid var(--line); background:#101010; color:var(--text); }}
-.topbar .brand {{ color:var(--primary); }} .topbar .brand small {{ color:var(--muted); }} .mark {{ width:38px; height:38px; display:grid; place-items:center; overflow:hidden; }} .mark img {{ width:38px; height:38px; object-fit:contain; }}
-.brand {{ font-weight:800; letter-spacing:.08em; }} .brand small {{ display:block; letter-spacing:.04em; font-size:10px; margin-top:2px; }}
-.status {{ margin-left:auto; color:var(--primary); border:1px solid #245b98; padding:5px 9px; font-size:11px; font-weight:700; }}
-main {{ max-width:1500px; margin:auto; padding:24px; }} h1 {{ font-size:24px; margin:0; }} .sub {{ margin:5px 0 20px; color:var(--muted); }}
-.summary {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px; }} .card,.panel {{ background:var(--panel); border:1px solid var(--line); }}
-.card {{ padding:13px 15px; }} .card span {{ display:block; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.06em; }} .card strong {{ display:block; margin-top:5px; font-size:21px; color:var(--primary); }} .card.good strong {{ color:var(--green); }} .card.warn strong {{ color:var(--yellow); }} .card.bad strong {{ color:var(--red); }}
-.grid {{ display:grid; grid-template-columns:1.1fr 2fr; gap:14px; margin-bottom:14px; }} .panel-title {{ padding:13px 15px; border-bottom:1px solid var(--line); color:var(--text); font-weight:700; }}
-.metadata {{ padding:8px 15px; }} .meta {{ display:grid; grid-template-columns:150px 1fr; gap:12px; padding:8px 0; border-bottom:1px solid #222b35; }} .meta:last-child {{ border:0; }} .meta span {{ color:var(--muted); }}
-.risk {{ display:flex; align-items:center; gap:14px; padding:16px; }} .risk-badge {{ width:92px; height:92px; border-radius:50%; display:grid; place-items:center; text-align:center; border:8px solid currentColor; font-weight:800; font-size:14px; }} .risk-critical {{ color:var(--maroon); }} .risk-high {{ color:var(--red); }} .risk-review {{ color:var(--orange); }} .risk-exposed {{ color:var(--yellow); }} .risk-clear {{ color:var(--green); }} .risk p {{ color:var(--muted); margin:0; }}
-.toolbar {{ display:flex; gap:8px; padding:14px; border-bottom:1px solid var(--line); }} button {{ border:1px solid #245b98; background:#1c4e83; color:#ffffff; padding:8px 11px; font:600 12px "Segoe UI",sans-serif; cursor:pointer; }} button:hover {{ background:#286cb4; }} input {{ margin-left:auto; min-width:260px; background:#101010; color:var(--text); border:1px solid var(--line); padding:8px 10px; }}
-table {{ width:100%; border-collapse:collapse; }} th,td {{ padding:10px 14px; text-align:left; border-bottom:1px solid #2b2b2b; }} th {{ color:var(--muted); font-size:11px; letter-spacing:.05em; text-transform:uppercase; background:#202020; }} tr:hover td {{ background:#202020; }} .state-open {{ color:var(--green); font-weight:700; }} .state-other {{ color:var(--yellow); }}
-.scripts {{ margin-top:14px; }} .script {{ margin:12px 14px; border:1px solid #303030; background:#101010; }} .script header {{ padding:8px 10px; color:var(--primary); border-bottom:1px solid #303030; font-weight:700; }} pre {{ margin:0; padding:12px; white-space:pre-wrap; overflow:auto; color:#dbe7f5; font:12px/1.45 ui-monospace,Consolas,monospace; }} .empty {{ color:var(--muted); padding:18px; text-align:center; }}
-@media (max-width:850px) {{ main {{ padding:14px; }} .summary,.grid {{ grid-template-columns:1fr 1fr; }} .grid {{ display:block; }} .grid>.panel {{ margin-bottom:14px; }} input {{ min-width:0; width:100%; margin:0; }} .toolbar {{ flex-wrap:wrap; }} }}
-</style>
+{head_js}
+<style>{css}</style>
 </head>
 <body>
-<header class="topbar"><div class="mark"><img src="../logo.png" alt="Nighthawk"></div><div class="brand">NIGHTHAWK<small>ADVANCED NETWORK SCANNER · VERSION 2.0</small></div><div class="status">SCAN COMPLETE</div></header>
+<header class="topbar">
+  <div class="mark"><img src="../logo_muted.png" alt="Nighthawk"></div>
+  <div class="brand">NIGHTHAWK<small>ADVANCED NETWORK SCANNER · VERSION 2.0</small></div>
+  <span class="status">SCAN COMPLETE</span>
+  <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle color theme">Light</button>
+</header>
 <main>
-<h1>Scan report</h1><p class="sub">Target: {html.escape(str(data.get('target', 'Unknown')))} &nbsp;•&nbsp; Ports: {html.escape(str(data.get('ports', '')))} &nbsp;•&nbsp; {html.escape(str(data.get('created', '')).replace('T', ' ')[:19])}</p>
-<section class="summary"><div class="card good"><span>Hosts up</span><strong>1</strong></div><div class="card"><span>Open ports</span><strong>{len(open_ports)}</strong></div><div class="card {'bad' if assessment['css'] in ('risk-critical', 'risk-high') else 'warn'}"><span>Script findings</span><strong>{len(scripts)}</strong></div><div class="card"><span>Ports scanned</span><strong>{html.escape(str(data.get('ports', '—')))}</strong></div></section>
-<section class="grid"><div class="panel"><div class="panel-title">Target information</div><div class="metadata">{meta_html}</div></div><div class="panel"><div class="panel-title">Risk assessment</div><div class="risk {risk_class}"><div class="risk-badge">{risk}</div><p>{assessment['detail']}<br>{len(open_ports)} open port(s) · {len(scripts)} script finding(s)</p></div></div></section>
-<section class="panel"><div class="panel-title">Ports &amp; services</div><div class="toolbar"><button onclick="downloadFile('json')">Export JSON</button><button onclick="downloadFile('csv')">Export CSV</button><button onclick="downloadFile('txt')">Export TXT</button><input id="filter" type="search" placeholder="Filter port, state, service, or version"></div><table id="results"><thead><tr><th>Port</th><th>State</th><th>Service</th><th>Version</th><th>Reason</th></tr></thead><tbody>{''.join(rows)}</tbody></table></section>
-<section class="panel scripts"><div class="panel-title">Script output</div>{''.join(script_blocks)}</section>
+  <div class="page-head">
+    <h1>Scan report</h1>
+    <p class="sub"><strong>{html.escape(str(data.get('target', 'Unknown')))}</strong> &nbsp;/&nbsp; ports {html.escape(str(data.get('ports', '')))} &nbsp;/&nbsp; {saved_at}</p>
+  </div>
+
+  <section class="summary" aria-label="Scan summary">
+    <div class="card good"><span>Hosts up</span><strong>1</strong></div>
+    <div class="card"><span>Open ports</span><strong>{len(open_ports)}</strong></div>
+    <div class="card {'bad' if assessment['css'] in ('risk-critical', 'risk-high') else ''}"><span>Script findings</span><strong>{len(scripts)}</strong></div>
+    <div class="card"><span>Ports scanned</span><strong>{html.escape(str(data.get('ports', '—')))}</strong></div>
+  </section>
+
+  <section class="grid">
+    <div class="panel">
+      <h2 class="panel-title">Target information</h2>
+      <div class="metadata">{meta_html}</div>
+    </div>
+    <div class="panel">
+      <h2 class="panel-title">Risk assessment</h2>
+      <div class="risk {risk_class}">
+        <div class="risk-badge">{risk}<small>assessment</small></div>
+        <p>{assessment['detail']}<span class="risk-counts">{len(open_ports)} open port(s) · {len(scripts)} script finding(s)</span></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel-title">Ports &amp; services</h2>
+    <div class="toolbar">
+      <button class="action" type="button" onclick="downloadFile('json')">Export JSON</button>
+      <button class="action" type="button" onclick="downloadFile('csv')">Export CSV</button>
+      <button class="action" type="button" onclick="downloadFile('txt')">Export TXT</button>
+      <input id="filter" type="search" placeholder="Filter port, state, service, or version">
+    </div>
+    <div class="table-wrap">
+      <table id="results">
+        <thead><tr><th>Port</th><th>State</th><th>Service</th><th>Version</th><th>Reason</th></tr></thead>
+        <tbody>{''.join(rows)}</tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel scripts">
+    <h2 class="panel-title">Script output</h2>
+    {script_section or "<p class='empty'>No Nmap script output was returned for this scan.</p>"}
+  </section>
 </main>
-<script>
-const reportData = {{json:{json.dumps(data)},csv:{json.dumps(base.with_suffix('.csv').read_text(encoding='utf-8'))},txt:{json.dumps(base.with_suffix('.txt').read_text(encoding='utf-8'))}}};
-function downloadFile(ext) {{ const blob=new Blob([typeof reportData[ext] === 'string' ? reportData[ext] : JSON.stringify(reportData[ext],null,2)],{{type:'text/plain'}}); const url=URL.createObjectURL(blob); const link=document.createElement('a'); link.href=url; link.download='{base.name}.'+ext; link.click(); URL.revokeObjectURL(url); }}
-document.getElementById('filter').addEventListener('input', function() {{ const q=this.value.toLowerCase(); document.querySelectorAll('#results tbody tr').forEach(row => row.hidden=!row.textContent.toLowerCase().includes(q)); }});
-</script></body></html>"""
+<footer>NIGHTHAWK 2.0.0 · local report · {saved_at}</footer>
+{report_js}
+</body>
+</html>"""
 
     # =======================================================================
     # VERSION 2 HISTORY (OVERRIDES THE LEGACY ONE)
