@@ -56,9 +56,28 @@ class NighthawkApp:
     """Store the application state and all user-interface actions in one class."""
 
     # -----------------------------------------------------------------------
-    # COLOR CONSTANTS — Named colors used everywhere in the UI.
-    # Keeping colors in one place makes the whole dashboard look consistent.
+    # COLOR PALETTES — "dark" is the SOC look, "light" is the daylight variant.
+    # Switching themes remaps the whole widget tree (see _apply_v2_palette).
     # -----------------------------------------------------------------------
+    PALETTES = {
+        "dark": {
+            "BG": "#000000", "PANEL": "#171717", "PANEL2": "#101010",
+            "PANEL3": "#202020", "BORDER": "#333333", "BORDER2": "#1f1f1f",
+            "FG": "#f5f7fa", "MUTED": "#a6adb8", "ACCENT": "#3595F9",
+            "ACCENT_HOVER": "#5A89C9", "WARN": "#FEDD0B", "ERROR": "#E05263",
+            "ORANGE": "#F2994A", "CRITICAL": "#7A1E30", "HEALTHY": "#27AE60",
+            "SELECT": "#263B54",
+        },
+        "light": {
+            "BG": "#eef3f9", "PANEL": "#ffffff", "PANEL2": "#f6f9fc",
+            "PANEL3": "#e3ecf6", "BORDER": "#c3d3e4", "BORDER2": "#d7e3ef",
+            "FG": "#13273d", "MUTED": "#5c7691", "ACCENT": "#1f6feb",
+            "ACCENT_HOVER": "#4a8df0", "WARN": "#a87b00", "ERROR": "#c73a4d",
+            "ORANGE": "#b85f16", "CRITICAL": "#8c1f33", "HEALTHY": "#1d8a52",
+            "SELECT": "#cfe3fb",
+        },
+    }
+
     BG = "#000000"        # Main background (pure black).
     PANEL = "#171717"     # Panel background (very dark gray).
     FG = "#f5f7fa"        # Main foreground text (almost white).
@@ -165,6 +184,8 @@ class NighthawkApp:
     def __init__(self, root):
         """Save the main Tkinter window, load saved choices, then build the screen."""
         self.root = root                                   # The main window.
+        self.dark = True                                   # Active color theme.
+        self._apply_palette_attrs()                        # Copy palette colors onto self.
         self.root.title("NIGHTHAWK // Advanced Network Scanner")
         self.root.geometry("1150x850")                     # Initial window size.
         self.root.minsize(1000, 750)                       # Smallest allowed size.
@@ -179,6 +200,22 @@ class NighthawkApp:
 
         self.config = self.load_config()                    # Load saved preferences.
         self.build_ui()                                     # Build the screen.
+
+    # -----------------------------------------------------------------------
+    # _apply_palette_attrs / toggle_theme — Switch the dark/light palettes.
+    # -----------------------------------------------------------------------
+    def _apply_palette_attrs(self):
+        """Copy the active palette into instance attributes used across the UI."""
+        for key, value in self.PALETTES["dark" if self.dark else "light"].items():
+            setattr(self, key, value)
+
+    def toggle_theme(self):
+        """Flip between the dark and light palettes and repaint the window."""
+        self.dark = not self.dark
+        self._apply_palette_attrs()
+        self._apply_v2_palette()
+        if hasattr(self, "theme_btn"):
+            self.theme_btn.configure(text="☀  LIGHT" if self.dark else "☾  DARK")
 
     # -----------------------------------------------------------------------
     # load_config — Read saved preferences from disk.
@@ -531,6 +568,7 @@ nmap -sV -Pn -p 80 --open -v -script http-enum 192.168.1.1
 """
         text.insert(tk.END, cheatsheet)
         text.config(state=tk.DISABLED)  # Read-only.
+        self._apply_theme_to(win)
 
     # -----------------------------------------------------------------------
     # apply_profile — When the user picks a profile, fill the form with
@@ -917,6 +955,7 @@ nmap -sV -Pn -p 80 --open -v -script http-enum 192.168.1.1
             self.start_scan()
 
         tk.Button(win, text="SCAN SELECTED", command=scan_selected, bg="#19364a", fg=self.ACCENT, font=("Consolas", 10, "bold"), pady=5).pack(fill=tk.X, padx=20, pady=10)
+        self._apply_theme_to(win)
 
     # -----------------------------------------------------------------------
     # valid_ports — Validate a port expression like "1-1024" or "22,80,443".
@@ -1528,22 +1567,7 @@ document.getElementById("filter").addEventListener("input", function () {{
         self.root.grid_columnconfigure(0, weight=1)
 
         # --- ttk Style definitions: Notebook, Treeview, ProgressBar -----
-        style = ttk.Style()
-        style.theme_use("clam")
-        style.configure("Nighthawk.Horizontal.TProgressbar", troughcolor=self.PANEL,
-                        background=self.ACCENT, bordercolor=self.PANEL,
-                        lightcolor=self.ACCENT, darkcolor=self.ACCENT)
-        style.configure("Nighthawk.TNotebook", background=self.BG, borderwidth=0)
-        style.configure("Nighthawk.TNotebook.Tab", background=self.PANEL, foreground=self.MUTED,
-                        padding=(22, 10), font=("Segoe UI", 10, "bold"))
-        style.map("Nighthawk.TNotebook.Tab", background=[("selected", self.ACCENT)],
-                  foreground=[("selected", "white")])
-        style.configure("Nighthawk.Treeview", background=self.PANEL, fieldbackground=self.PANEL,
-                        foreground=self.FG, rowheight=28, borderwidth=0,
-                        font=("Segoe UI", 10))
-        style.configure("Nighthawk.Treeview.Heading", background="#202020", foreground=self.FG,
-                        font=("Segoe UI", 9, "bold"), relief=tk.FLAT)
-        style.map("Nighthawk.Treeview", background=[("selected", "#263B54")])
+        self._apply_ttk_styles()
 
         # --- HEADER -------------------------------------------------------
         header = tk.Frame(self.root, bg="#020b16", height=74)
@@ -1569,6 +1593,12 @@ document.getElementById("filter").addEventListener("input", function () {{
         self._v2_nav_button(header, "▤\nReports", self.show_history).grid(row=0, column=3, sticky="ns")
         self._v2_nav_button(header, "⚙\nSettings", self.show_settings_hint).grid(row=0, column=4, sticky="ns")
         self._v2_nav_button(header, "ⓘ\nAbout", self.show_about).grid(row=0, column=5, sticky="ns")
+        self.theme_btn = tk.Button(header, text="☀  LIGHT", command=self.toggle_theme,
+                                   bg="#020b16", fg="#9fc9f4", activebackground="#164f96",
+                                   activeforeground="white", relief=tk.FLAT, bd=0,
+                                   padx=14, pady=10, font=("Segoe UI", 9, "bold"),
+                                   cursor="hand2")
+        self.theme_btn.grid(row=0, column=6, padx=(20, 0), sticky="ns")
         tk.Label(header, text="NMAP GUI", bg="#020b16", fg="#5f82a6", font=("Segoe UI", 9, "bold")).grid(row=0, column=8, sticky="e", padx=22)
 
         # --- MAIN SHELL: Sidebar (left) + Content (right) ----------------
@@ -1596,50 +1626,134 @@ document.getElementById("filter").addEventListener("input", function () {{
         self.scan_type_changed(self.scan_type.get())
 
     # -----------------------------------------------------------------------
-    # _apply_v2_palette — Walk the whole widget tree and remap old blue-ish
-    # colors to the new black/gray SOC palette. This keeps the code readable
-    # while enforcing the color theme in one place.
+    # _apply_v2_palette — Walk the whole widget tree and remap legacy blue
+    # colors to the active dark/light palette. One place owns the theme.
     # -----------------------------------------------------------------------
     def _apply_v2_palette(self):
-        """Apply a restrained SOC-dashboard palette to the Version 2 layout."""
-        # Map: old color → new color.
-        colors = {
-            "#020b16": self.BG, "#030d18": "#101010", "#05111f": self.PANEL,
-            "#061321": self.PANEL, "#06192c": self.PANEL, "#071524": self.PANEL,
-            "#081a2b": "#1f1f1f", "#091d31": "#101010", "#0a2037": "#202020",
-            "#0b2948": "#202020", "#0b3d70": "#202020", "#123653": "#333333",
-            "#124f9a": "#202020", "#1260a8": "#333333", "#1265df": self.ACCENT,
-            "#153b70": "#202020", "#162b40": "#202020", "#164f96": "#333333",
-            "#1686ff": self.ACCENT, "#1b4d78": "#333333", "#1c4b74": "#333333",
-            "#27669c": "#333333", "#25b9ff": self.ACCENT, "#42e692": self.HEALTHY,
-            "#47caff": self.ACCENT, "#4ca7ff": self.ACCENT, "#4fd7ff": self.ACCENT,
-            "#4fe2e0": self.ACCENT, "#52e99a": self.ACCENT, "#57ed9f": self.ACCENT,
-            "#5e94c8": self.MUTED, "#5f82a6": self.MUTED, "#75c6ff": self.ACCENT,
-            "#78a5d2": self.MUTED, "#82a9d7": self.MUTED, "#88aaca": self.MUTED,
-            "#8fb4d8": self.MUTED, "#91b2d3": self.MUTED, "#9bbad8": self.MUTED,
-            "#9eb9d8": self.MUTED, "#9fc2e5": self.MUTED, "#9fc9f4": self.MUTED,
-            "#b7d4ef": self.FG, "#b9d8ff": self.FG, "#b9ddff": self.FG,
-            "#bcd7ff": self.FG, "#bfd8f3": self.FG, "#c8ddf4": self.FG,
-            "#c8e0ff": self.FG, "#c8e2ff": self.FG, "#d7e9ff": self.FG,
-            "#d9eaff": self.FG, "#e1efff": self.FG, "#e3f2ff": self.FG,
-            "#e6f2ff": self.FG, "#ec3545": self.ACCENT, "#ff5c65": "#5A89C9", "#240018": "#101010",
+        """Apply the active palette to every widget, ttk style, and tag."""
+        self.root.configure(bg=self.BG)
+        mapping = self._theme_color_map()
+        self._recolor_tree(self.root, mapping)
+        for child in self.root.winfo_children():
+            if isinstance(child, tk.Toplevel):
+                self._recolor_tree(child, mapping)
+                self._restyle_text_tags(child)
+        self._apply_ttk_styles()
+
+        if hasattr(self, "risk_canvas"):
+            current = str(getattr(self, "_risk_color", self.ACCENT)).lower()
+            self._draw_risk(mapping.get(current, current))
+        if hasattr(self, "output"):
+            self.output.tag_config("open", foreground=self.HEALTHY)
+            self.output.tag_config("closed", foreground=self.WARN)
+            self.output.tag_config("error", foreground=self.ERROR)
+        if hasattr(self, "port_table"):
+            self.port_table.tag_configure("open", foreground=self.HEALTHY)
+            self.port_table.tag_configure("closed", foreground=self.ERROR)
+        if hasattr(self, "theme_btn"):
+            self.theme_btn.configure(text="☀  LIGHT" if self.dark else "☾  DARK")
+
+    def _apply_ttk_styles(self):
+        """Configure the ttk notebook, table, and progress bar for the active palette."""
+        style = ttk.Style()
+        try:
+            style.theme_use("clam")
+        except tk.TclError:
+            pass
+        style.configure("Nighthawk.Horizontal.TProgressbar", troughcolor=self.PANEL,
+                        background=self.ACCENT, bordercolor=self.PANEL,
+                        lightcolor=self.ACCENT, darkcolor=self.ACCENT)
+        style.configure("Nighthawk.TNotebook", background=self.BG, borderwidth=0)
+        style.configure("Nighthawk.TNotebook.Tab", background=self.PANEL, foreground=self.MUTED,
+                        padding=(22, 10), font=("Segoe UI", 10, "bold"))
+        style.map("Nighthawk.TNotebook.Tab", background=[("selected", self.ACCENT)],
+                  foreground=[("selected", "white")])
+        style.configure("Nighthawk.Treeview", background=self.PANEL, fieldbackground=self.PANEL,
+                        foreground=self.FG, rowheight=28, borderwidth=0,
+                        font=("Segoe UI", 10))
+        style.configure("Nighthawk.Treeview.Heading", background=self.PANEL3, foreground=self.FG,
+                        font=("Segoe UI", 9, "bold"), relief=tk.FLAT)
+        style.map("Nighthawk.Treeview", background=[("selected", self.SELECT)])
+
+    def _theme_color_map(self):
+        """Return every known legacy color mapped to the active palette color."""
+        legacy = {
+            "#020b16": "BG", "#030d18": "PANEL2", "#05090c": "PANEL2",
+            "#05111f": "PANEL", "#061321": "PANEL", "#06192c": "PANEL",
+            "#071524": "PANEL", "#081a2b": "PANEL2", "#091d31": "PANEL2",
+            "#0a2037": "PANEL3", "#0b2948": "PANEL3", "#0b3d70": "SELECT",
+            "#101010": "PANEL2", "#123653": "BORDER", "#124f9a": "PANEL3",
+            "#1260a8": "BORDER", "#1265df": "ACCENT", "#153b70": "SELECT",
+            "#162b40": "PANEL3", "#164f96": "ACCENT_HOVER", "#1686ff": "ACCENT",
+            "#19364a": "BORDER", "#1b4d78": "BORDER", "#1c4b74": "BORDER",
+            "#202020": "PANEL3", "#240018": "PANEL2",
+            "#27669c": "BORDER", "#25b9ff": "ACCENT", "#2b3540": "BORDER",
+            "#333333": "BORDER", "#3d1231": "PANEL3", "#3ddc97": "HEALTHY",
+            "#42e692": "HEALTHY", "#47caff": "ACCENT", "#4ca7ff": "ACCENT",
+            "#4fd7ff": "ACCENT", "#4fe2e0": "ACCENT", "#52e99a": "HEALTHY",
+            "#57ed9f": "HEALTHY", "#5e94c8": "MUTED", "#5f82a6": "MUTED",
+            "#75c6ff": "ACCENT", "#78a5d2": "MUTED", "#82a9d7": "MUTED",
+            "#88aaca": "MUTED", "#8e9baa": "MUTED", "#8fb4d8": "MUTED",
+            "#914187": "BORDER", "#91b2d3": "MUTED", "#9bbad8": "MUTED",
+            "#9eb9d8": "MUTED", "#9fc2e5": "MUTED", "#9fc9f4": "MUTED",
+            "#b7d4ef": "FG", "#b9d8ff": "FG", "#b9ddff": "FG",
+            "#bcd7ff": "FG", "#bfd8f3": "FG", "#c8ddf4": "FG",
+            "#c8e0ff": "FG", "#c8e2ff": "FG", "#d7e9ff": "FG",
+            "#d9eaff": "FG", "#e1efff": "FG", "#e3f2ff": "FG",
+            "#e6f2ff": "FG", "#ec3545": "ACCENT", "#f2c8ed": "ACCENT",
+            "#ff5c65": "ACCENT_HOVER", "#ff6b6b": "ERROR",
         }
+        roles = {}
+        for theme in self.PALETTES.values():
+            for role, value in theme.items():
+                roles[value.lower()] = role
+        roles.update(legacy)
+        return {source: getattr(self, role) for source, role in roles.items()}
 
-        def recolor(widget):
-            """Recursively recolor this widget and all its descendants."""
-            for option in ("background", "foreground", "activebackground", "activeforeground",
-                           "insertbackground", "highlightbackground", "highlightcolor", "selectcolor"):
-                try:
-                    current = str(widget.cget(option)).lower()
-                    if current in colors:
-                        widget.configure(**{option: colors[current]})
-                except tk.TclError:
-                    pass  # Some widgets don't support this option; ignore.
-            for child in widget.winfo_children():
-                recolor(child)
+    def _recolor_tree(self, widget, mapping):
+        """Recursively remap colors on one widget subtree."""
+        for option in ("background", "foreground", "activebackground", "activeforeground",
+                       "insertbackground", "highlightbackground", "highlightcolor",
+                       "selectcolor", "selectbackground", "selectforeground",
+                       "troughcolor", "disabledforeground"):
+            try:
+                current = str(widget.cget(option)).lower()
+                if current in mapping:
+                    widget.configure(**{option: mapping[current]})
+            except tk.TclError:
+                pass  # Some widgets don't support this option; ignore.
+        for child in widget.winfo_children():
+            self._recolor_tree(child, mapping)
 
-        recolor(self.root)
-        self._draw_risk(self.ACCENT)  # Repaint the risk ring with the new palette.
+    def _apply_theme_to(self, window):
+        """Apply the active palette to a freshly created dialog window."""
+        self._recolor_tree(window, self._theme_color_map())
+        self._restyle_text_tags(window)
+
+    def _restyle_text_tags(self, widget):
+        """Update named text tags (history diff) to the active semantic colors."""
+        tag_colors = {"added": self.HEALTHY, "removed": self.ERROR,
+                      "heading": self.ACCENT, "muted": self.MUTED}
+        if isinstance(widget, tk.Text):
+            names = set(widget.tag_names())
+            for tag, color in tag_colors.items():
+                if tag in names:
+                    widget.tag_config(tag, foreground=color)
+        for child in widget.winfo_children():
+            self._restyle_text_tags(child)
+
+    def _draw_risk(self, color):
+        """Redraw the simple risk ring using the severity color selected for this scan."""
+        self._risk_color = color
+        self.risk_canvas.delete("all")
+        # Outer dim ring (background).
+        self.risk_canvas.create_oval(37, 25, 173, 161, outline=self.BORDER, width=9)
+        # Colored arc on top of it (270 degrees).
+        self.risk_canvas.create_arc(37, 25, 173, 161, start=90, extent=270, style=tk.ARC, outline=color, width=9)
+        # Center label text (e.g., "HIGH RISK").
+        self.risk_canvas.create_text(105, 84, text=self.risk_label.get(), fill=color, font=("Segoe UI", 13, "bold"), justify=tk.CENTER)
+        # Small caption under the label.
+        self.risk_canvas.create_text(105, 125, text="assessment", fill=self.MUTED, font=("Segoe UI", 8), justify=tk.CENTER)
 
     # -----------------------------------------------------------------------
     # _v2_nav_button — Small helper to make a top-nav button.
@@ -1883,21 +1997,6 @@ document.getElementById("filter").addEventListener("input", function () {{
         tk.Label(legend, textvariable=self.risk_detail_var, justify=tk.LEFT, bg="#061321", fg="#bfd8f3", font=("Segoe UI", 10)).pack(anchor="w", pady=(53, 0))
 
     # -----------------------------------------------------------------------
-    # _draw_risk — Draw the risk ring (two circles + two text labels).
-    # -----------------------------------------------------------------------
-    def _draw_risk(self, color):
-        """Redraw the simple risk ring using the severity color selected for this scan."""
-        self.risk_canvas.delete("all")
-        # Outer dim ring (background).
-        self.risk_canvas.create_oval(37, 25, 173, 161, outline="#2b3540", width=9)
-        # Colored arc on top of it (270 degrees).
-        self.risk_canvas.create_arc(37, 25, 173, 161, start=90, extent=270, style=tk.ARC, outline=color, width=9)
-        # Center label text (e.g., "HIGH RISK").
-        self.risk_canvas.create_text(105, 84, text=self.risk_label.get(), fill=color, font=("Segoe UI", 13, "bold"), justify=tk.CENTER)
-        # Small caption under the label.
-        self.risk_canvas.create_text(105, 125, text="assessment", fill="#8e9baa", font=("Segoe UI", 8), justify=tk.CENTER)
-
-    # -----------------------------------------------------------------------
     # _risk_assessment — Decide one severity label from scan results.
     # Rules (checked in order):
     #   1. Critical script evidence (exploit / RCE) → CRITICAL
@@ -2009,7 +2108,7 @@ document.getElementById("filter").addEventListener("input", function () {{
         else:
             self.custom_frame.pack_forget()
         if selected in custom_types:
-            self.options_frame.configure(bg="#05111f")
+            self.options_frame.configure(bg=self.PANEL)
 
     # -----------------------------------------------------------------------
     # refresh_dashboard — Called after a successful scan to update every
@@ -2319,6 +2418,11 @@ document.getElementById('filter').addEventListener('input', function() {{ const 
         history.bind("<Double-1>", open_selected)
         tk.Button(actions, text="OPEN REPORT", command=open_selected, bg="#3d1231", fg=self.FG, relief=tk.FLAT, font=("Segoe UI", 9, "bold"), padx=13, pady=8).pack(side=tk.RIGHT, padx=(8, 0))
         tk.Button(actions, text="COMPARE SELECTED", command=write_diff, bg=self.ACCENT, fg="white", relief=tk.FLAT, font=("Segoe UI", 9, "bold"), padx=13, pady=8).pack(side=tk.RIGHT)
+        diff.tag_config("added", foreground=self.HEALTHY)
+        diff.tag_config("removed", foreground=self.ERROR)
+        diff.tag_config("heading", foreground=self.ACCENT, font=("Cascadia Mono", 10, "bold"))
+        diff.tag_config("muted", foreground=self.MUTED)
+        self._apply_theme_to(win)
 
 
 # ---------------------------------------------------------------------------

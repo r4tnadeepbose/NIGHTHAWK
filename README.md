@@ -32,6 +32,12 @@ A desktop Nmap scanner with a Version 2 security dashboard. NIGHTHAWK turns comm
 
 Version 2 rebuilds the entire interface as a **security-operations dashboard** while keeping every scanner feature from Version 1.
 
+<p align="center">
+  <img src="screenshots/nighthawk-overview-dark.png" alt="NIGHTHAWK 2 dashboard in the dark theme" width="900">
+  <br>
+  <sub>The Version 2 dashboard (dark) — configuration sidebar, summary cards, target info and risk gauge.</sub>
+</p>
+
 | Area | What changed |
 |---|---|
 | **Dashboard** | Split layout — sidebar for scan configuration, main panel with Overview / Ports / Scripts / Live / Export tabs |
@@ -41,6 +47,7 @@ Version 2 rebuilds the entire interface as a **security-operations dashboard** w
 | **Summary Cards** | Hosts up · Open ports · Script findings · Scan duration, updated live after every scan |
 | **Target Info Panel** | IP · MAC · OS · Network distance · Service info, populated from Nmap XML |
 | **Retained** | All scan types, presets, custom flags, NSE scripts, and subnet discovery |
+| **Themes** | Dark SOC palette and a daylight theme, switchable from the ☀/☾ header button |
 
 ---
 
@@ -69,6 +76,12 @@ Version 2 rebuilds the entire interface as a **security-operations dashboard** w
 - Auto-open HTML report toggle.
 - Config auto-saves to `nighthawk_config.json` — your last target, ports, scan type, and timing are restored next launch.
 - Built-in **Nmap cheatsheet** window.
+
+<p align="center">
+  <img src="screenshots/nighthawk-ports-dark.png" alt="NIGHTHAWK ports and services table" width="900">
+  <br>
+  <sub>Ports &amp; Services — state, service, version and reason per port, with open rows in green and closed rows in red.</sub>
+</p>
 
 ---
 
@@ -126,6 +139,12 @@ User picks IPs          ▼
                         ▼
                   Auto-open HTML (optional)
 ```
+
+<p align="center">
+  <img src="screenshots/nighthawk-live-light.png" alt="NIGHTHAWK live output tab streaming Nmap output" width="900">
+  <br>
+  <sub>Live output — the exact Nmap command, a progress spinner, and color-coded stdout streamed in real time.</sub>
+</p>
 
 ### Scan execution pipeline
 
@@ -244,6 +263,12 @@ sudo python3 scanner.py
 
 ## Using NIGHTHAWK
 
+<p align="center">
+  <img src="screenshots/nighthawk-overview-light.png" alt="NIGHTHAWK dashboard in the light theme" width="900">
+  <br>
+  <sub>The daylight theme — same dashboard, switched with the ☀ Light / ☾ Dark button.</sub>
+</p>
+
 ### Basic scan
 
 1. **Enter a target** in the left sidebar — a hostname (`scanme.nmap.org`), an IP address (`192.168.1.1`), or a CIDR range (`192.168.1.0/24`).
@@ -309,6 +334,12 @@ reports/nighthawk_YYYYMMDD_HHMMSS_<id>.{html,json,csv,txt}
 | **`.csv`** | Spreadsheet-friendly — one row per port (formula-injection protected) |
 | **`.txt`** | Plain text — one line per port, ideal for diffs or grep |
 
+<p align="center">
+  <img src="screenshots/nighthawk-export-light.png" alt="NIGHTHAWK export tab with report buttons" width="900">
+  <br>
+  <sub>Export tab — open the HTML report or jump straight to the JSON, CSV and TXT companions.</sub>
+</p>
+
 ### What's inside the HTML report
 
 - **Header** — logo, target, port range, timestamp, `SCAN COMPLETE` badge.
@@ -367,6 +398,7 @@ NIGHTHAWK/
 ├── nighthawk.1              ← man page
 ├── README.md
 ├── HELP.md
+├── screenshots/             ← README captures (dark + light)
 │
 ├── .vscode/                 ← optional editor settings
 │
