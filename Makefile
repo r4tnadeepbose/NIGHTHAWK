@@ -1,4 +1,4 @@
-.PHONY: run run-root help version check man install clean
+.PHONY: run run-root help version check compile test man install clean
 
 run:
 	./scanner.py
@@ -14,6 +14,12 @@ version:
 
 check:
 	./requirements.txt
+
+compile:
+	python3 -m compileall nighthawk_app scanner.py
+
+test:
+	python3 -m unittest discover -s tests -v
 
 man:
 	man -l nighthawk.1
