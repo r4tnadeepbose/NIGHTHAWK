@@ -58,7 +58,7 @@ class NighthawkApp:
     # -----------------------------------------------------------------------
     # COLOR PALETTES — muted terminal look.
     #   dark  → blue-charcoal black with a dim steel-blue accent.
-    #   light → warm parchment with an ink-brown and slate-blue accent.
+    #   light → clean white with a faint rose tint and a slate-blue accent.
     # Switching themes remaps the whole widget tree (see _apply_v2_palette).
     # -----------------------------------------------------------------------
     PALETTES = {
@@ -71,12 +71,12 @@ class NighthawkApp:
             "SELECT": "#22303c", "ON_ACCENT": "#0b1015",
         },
         "light": {
-            "BG": "#e8e1d3", "PANEL": "#f3eee3", "PANEL2": "#ece5d8",
-            "PANEL3": "#ded6c6", "BORDER": "#c9bea8", "BORDER2": "#d6cdba",
-            "FG": "#2b2721", "MUTED": "#6e6659", "ACCENT": "#46647f",
-            "ACCENT_HOVER": "#56788f", "WARN": "#8a6a2b", "ERROR": "#9a4a3e",
-            "ORANGE": "#97693a", "CRITICAL": "#6d312b", "HEALTHY": "#4d7883",
-            "SELECT": "#dcd4c3", "ON_ACCENT": "#f4efe4",
+            "BG": "#f7f4f6", "PANEL": "#ffffff", "PANEL2": "#f7f3f6",
+            "PANEL3": "#eae4e9", "BORDER": "#d9d2d9", "BORDER2": "#e8e2e7",
+            "FG": "#232630", "MUTED": "#6b6f7c", "ACCENT": "#45688c",
+            "ACCENT_HOVER": "#587fa5", "WARN": "#9a7526", "ERROR": "#a34f55",
+            "ORANGE": "#a06b3f", "CRITICAL": "#6f3334", "HEALTHY": "#4f7d8a",
+            "SELECT": "#e2e7f0", "ON_ACCENT": "#ffffff",
         },
     }
 
