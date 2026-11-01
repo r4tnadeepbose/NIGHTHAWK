@@ -1,2 +1,9 @@
 __pycache__/
 *.pyc
+
+# Generated scan output (keep the folder, not the reports)
+/reports/*
+!/reports/.gitkeep
+
+# Local preferences written by the app
+/nighthawk_config.json
