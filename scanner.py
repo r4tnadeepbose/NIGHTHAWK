@@ -1879,9 +1879,9 @@ document.getElementById("filter").addEventListener("input", function () {{
         self._v2_field(sidebar, "Timing", timing_menu)
 
         # Scan options (checkboxes).
-        self.options_frame = tk.Frame(sidebar, bg="#05111f")
-        self.options_frame.pack(fill=tk.X, padx=10, pady=(12, 0))
-        tk.Label(self.options_frame, text="Scan options", bg="#05111f", fg="#d7e9ff", font=("Segoe UI", 10, "bold")).pack(anchor="w", padx=4, pady=(0, 4))
+        self.options_frame = tk.Frame(sidebar, bg=self.PANEL)
+        self.options_frame.pack(fill=tk.X, padx=10, pady=(14, 0))
+        tk.Label(self.options_frame, text="SCAN OPTIONS", bg=self.PANEL, fg=self.MUTED, font=("Consolas", 9, "bold")).pack(anchor="w", padx=5, pady=(0, 6))
         self.service_var = tk.BooleanVar(value=self.config.get("service", True))
         self.os_var = tk.BooleanVar(value=self.config.get("os", False))
         self.nse_default = tk.BooleanVar(value=False)
@@ -1891,12 +1891,10 @@ document.getElementById("filter").addEventListener("input", function () {{
         for text, variable in (("Service detection (-sV)", self.service_var), ("OS detection (-O)", self.os_var),
                                ("Default scripts (-sC)", self.nse_default), ("Vulnerability scripts", self.nse_vuln),
                                ("HTTP enumeration", self.nse_http), ("SSL cipher audit", self.nse_ssl)):
-            tk.Checkbutton(self.options_frame, text=text, variable=variable, bg="#05111f", fg="#c8ddf4",
-                           selectcolor="#0b3d70", activebackground="#05111f", activeforeground="white",
-                           font=("Segoe UI", 9), anchor="w", relief=tk.FLAT).pack(fill=tk.X, padx=2, pady=1)
+            self._v2_checkbox(self.options_frame, text, variable).pack(fill=tk.X, padx=2, pady=1)
 
         # Custom-flags entry (hidden until "Custom Flags" scan type is chosen).
-        self.custom_frame = tk.Frame(sidebar, bg="#05111f")
+        self.custom_frame = tk.Frame(sidebar, bg=self.PANEL)
         self.custom_entry = self._v2_entry(self.custom_frame, "-sT -sV --reason")
         self._v2_field(self.custom_frame, "Custom Nmap flags", self.custom_entry)
         self.custom_frame.pack_forget()
@@ -1908,31 +1906,29 @@ document.getElementById("filter").addEventListener("input", function () {{
 
         # Auto-open HTML toggle.
         self.auto_open_var = tk.BooleanVar(value=self.config.get("auto_open", True))
-        tk.Checkbutton(sidebar, text="Open HTML report when complete", variable=self.auto_open_var, bg="#05111f", fg="#8fb4d8",
-                       selectcolor="#0b3d70", activebackground="#05111f", activeforeground="white",
-                       font=("Segoe UI", 9), anchor="w", relief=tk.FLAT).pack(fill=tk.X, padx=14, pady=(10, 6))
+        self._v2_checkbox(sidebar, "Open HTML report when complete", self.auto_open_var).pack(fill=tk.X, padx=14, pady=(12, 6))
 
         # Quick tools: Save preset + Cheatsheet.
-        quick_tools = tk.Frame(sidebar, bg="#05111f")
-        quick_tools.pack(fill=tk.X, padx=14, pady=(0, 8))
-        self.save_fav_btn = tk.Button(quick_tools, text="SAVE PRESET", command=self.save_favorite, bg="#0b2948", fg="#b9ddff",
-                                      activebackground="#164f96", activeforeground="white", relief=tk.FLAT,
-                                      font=("Segoe UI", 8, "bold"), padx=8, pady=6)
+        quick_tools = tk.Frame(sidebar, bg=self.PANEL)
+        quick_tools.pack(fill=tk.X, padx=15, pady=(0, 10))
+        self.save_fav_btn = tk.Button(quick_tools, text="SAVE PRESET", command=self.save_favorite, bg=self.PANEL3, fg=self.FG,
+                                      activebackground=self.SELECT, activeforeground=self.ACCENT, relief=tk.FLAT,
+                                      font=("Consolas", 8, "bold"), padx=8, pady=6)
         self.save_fav_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 3))
-        tk.Button(quick_tools, text="? CHEATSHEET", command=self.show_cheatsheet, bg="#0b2948", fg="#b9ddff",
-                  activebackground="#164f96", activeforeground="white", relief=tk.FLAT,
-                  font=("Segoe UI", 8, "bold"), padx=8, pady=6).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(3, 0))
+        tk.Button(quick_tools, text="? CHEATSHEET", command=self.show_cheatsheet, bg=self.PANEL3, fg=self.FG,
+                  activebackground=self.SELECT, activeforeground=self.ACCENT, relief=tk.FLAT,
+                  font=("Consolas", 8, "bold"), padx=8, pady=6).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(3, 0))
 
         # Start / Stop buttons (pinned to bottom of sidebar).
-        actions = tk.Frame(sidebar, bg="#05111f")
-        actions.pack(fill=tk.X, side=tk.BOTTOM, padx=14, pady=14)
-        self.start_btn = tk.Button(actions, text="▶  START SCAN", command=self.start_scan, bg=self.ACCENT, fg="#ffffff",
-                                   activebackground="#5A89C9", activeforeground="#ffffff", relief=tk.FLAT,
-                                   font=("Segoe UI", 12, "bold"), pady=11, cursor="hand2")
+        actions = tk.Frame(sidebar, bg=self.PANEL)
+        actions.pack(fill=tk.X, side=tk.BOTTOM, padx=15, pady=15)
+        self.start_btn = tk.Button(actions, text="▶  START SCAN", command=self.start_scan, bg=self.ACCENT, fg=self.ON_ACCENT,
+                                   activebackground=self.ACCENT_HOVER, activeforeground=self.ON_ACCENT, relief=tk.FLAT,
+                                   font=("Consolas", 11, "bold"), pady=11, cursor="hand2")
         self.start_btn.pack(fill=tk.X)
-        self.stop_btn = tk.Button(actions, text="■  STOP", command=self.stop_scan, bg="#162b40", fg="#b7d4ef",
-                                  activebackground="#294b6c", activeforeground="white", relief=tk.FLAT,
-                                  font=("Segoe UI", 9, "bold"), pady=6, state=tk.DISABLED)
+        self.stop_btn = tk.Button(actions, text="■  STOP", command=self.stop_scan, bg=self.PANEL3, fg=self.ERROR,
+                                  activebackground=self.SELECT, activeforeground=self.ERROR, relief=tk.FLAT,
+                                  font=("Consolas", 9, "bold"), pady=6, state=tk.DISABLED)
         self.stop_btn.pack(fill=tk.X, pady=(6, 0))
 
     # -----------------------------------------------------------------------
@@ -1940,9 +1936,11 @@ document.getElementById("filter").addEventListener("input", function () {{
     # -----------------------------------------------------------------------
     def _summary_card(self, parent, title, variable, color):
         """Create one compact scan total card, such as open ports or scan duration."""
-        card = tk.Frame(parent, bg="#071524", highlightbackground="#1b4d78", highlightthickness=1)
-        tk.Label(card, text=title.upper(), bg="#071524", fg="#88aaca", font=("Segoe UI", 8, "bold")).pack(anchor="w", padx=14, pady=(10, 2))
-        tk.Label(card, textvariable=variable, bg="#071524", fg=color, font=("Segoe UI", 18, "bold")).pack(anchor="w", padx=14, pady=(0, 10))
+        card = tk.Frame(parent, bg=self.PANEL, highlightbackground=self.BORDER, highlightthickness=1)
+        tk.Label(card, text=title.upper(), bg=self.PANEL, fg=self.MUTED, font=("Consolas", 8, "bold")).pack(anchor="w", padx=15, pady=(11, 2))
+        value = tk.Label(card, textvariable=variable, bg=self.PANEL, fg=color, font=("Consolas", 18, "bold"))
+        value.pack(anchor="w", padx=15, pady=(0, 11))
+        card.value_label = value
         return card
 
     # -----------------------------------------------------------------------
@@ -1951,19 +1949,20 @@ document.getElementById("filter").addEventListener("input", function () {{
     def _build_v2_content(self, content):
         """Build the main dashboard area and its Overview, Ports, Scripts, and Export tabs."""
         # --- Heading (title + subtitle + status pill) --------------------
-        heading = tk.Frame(content, bg="#020b16")
-        heading.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+        heading = tk.Frame(content, bg=self.BG)
+        heading.grid(row=0, column=0, sticky="ew", pady=(2, 10))
         heading.grid_columnconfigure(0, weight=1)
         self.report_title_var = tk.StringVar(value="Ready to scan")
         self.report_target_var = tk.StringVar(value="Target: choose a host in the scan panel")
-        tk.Label(heading, textvariable=self.report_title_var, bg="#020b16", fg="#bcd7ff", font=("Segoe UI", 22, "bold")).grid(row=0, column=0, sticky="w")
-        tk.Label(heading, textvariable=self.report_target_var, bg="#020b16", fg="#82a9d7", font=("Segoe UI", 12)).grid(row=1, column=0, sticky="w")
-        self.status_label = tk.Label(heading, text="READY", bg="#06192c", fg="#4fd7ff", font=("Segoe UI", 9, "bold"), padx=14, pady=8)
+        tk.Label(heading, textvariable=self.report_title_var, bg=self.BG, fg=self.FG, font=("Consolas", 20, "bold")).grid(row=0, column=0, sticky="w")
+        tk.Label(heading, textvariable=self.report_target_var, bg=self.BG, fg=self.MUTED, font=("Segoe UI", 11)).grid(row=1, column=0, sticky="w", pady=(3, 0))
+        self.status_label = tk.Label(heading, text="READY", bg=self.PANEL, fg=self.ACCENT, font=("Consolas", 9, "bold"),
+                                     padx=14, pady=8, highlightbackground=self.BORDER, highlightthickness=1)
         self.status_label.grid(row=0, column=1, rowspan=2, sticky="e")
 
         # --- Summary cards ----------------------------------------------
-        cards = tk.Frame(content, bg="#020b16")
-        cards.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        cards = tk.Frame(content, bg=self.BG)
+        cards.grid(row=1, column=0, sticky="ew", pady=(0, 12))
         for col in range(4):
             cards.grid_columnconfigure(col, weight=1)
         self.host_count_var = tk.StringVar(value="—")
@@ -1971,22 +1970,24 @@ document.getElementById("filter").addEventListener("input", function () {{
         self.findings_var = tk.StringVar(value="—")
         self.duration_var = tk.StringVar(value="—")
         for col, (title, var, color) in enumerate((
-            ("Hosts up", self.host_count_var, "#3ddc97"),
+            ("Hosts up", self.host_count_var, self.HEALTHY),
             ("Open ports", self.open_ports_var, self.ACCENT),
             ("Script findings", self.findings_var, self.ERROR),
             ("Scan duration", self.duration_var, self.WARN),
         )):
-            self._summary_card(cards, title, var, color).grid(
-                row=0, column=col, sticky="ew", padx=(0 if col == 0 else 7, 0))
+            card = self._summary_card(cards, title, var, color)
+            card.grid(row=0, column=col, sticky="ew", padx=(0 if col == 0 else 8, 0))
+            if title == "Script findings":
+                self.findings_value_label = card.value_label
 
         # --- Tabbed area -------------------------------------------------
         self.dashboard_tabs = ttk.Notebook(content, style="Nighthawk.TNotebook")
         self.dashboard_tabs.grid(row=4, column=0, sticky="nsew")
-        self.overview_tab = tk.Frame(self.dashboard_tabs, bg="#020b16")
-        ports_tab = tk.Frame(self.dashboard_tabs, bg="#020b16")
-        scripts_tab = tk.Frame(self.dashboard_tabs, bg="#020b16")
-        live_tab = tk.Frame(self.dashboard_tabs, bg="#020b16")
-        export_tab = tk.Frame(self.dashboard_tabs, bg="#020b16")
+        self.overview_tab = tk.Frame(self.dashboard_tabs, bg=self.BG)
+        ports_tab = tk.Frame(self.dashboard_tabs, bg=self.BG)
+        scripts_tab = tk.Frame(self.dashboard_tabs, bg=self.BG)
+        live_tab = tk.Frame(self.dashboard_tabs, bg=self.BG)
+        export_tab = tk.Frame(self.dashboard_tabs, bg=self.BG)
         self.dashboard_tabs.add(self.overview_tab, text="Overview")
         self.dashboard_tabs.add(ports_tab, text="Ports & Services")
         self.dashboard_tabs.add(scripts_tab, text="Script output")
@@ -2009,29 +2010,29 @@ document.getElementById("filter").addEventListener("input", function () {{
         tab.grid_columnconfigure(1, weight=2)
 
         # Left: "Target information" table with key/value rows.
-        info = tk.Frame(tab, bg="#061321", highlightbackground="#1c4b74", highlightthickness=1)
+        info = tk.Frame(tab, bg=self.PANEL, highlightbackground=self.BORDER, highlightthickness=1)
         info.grid(row=0, column=0, sticky="nsew", padx=(0, 8), pady=8)
-        tk.Label(info, text="◉  Target information", bg="#061321", fg="#4fe2e0", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=15, pady=12)
+        tk.Label(info, text="TARGET INFORMATION", bg=self.PANEL, fg=self.MUTED, font=("Consolas", 9, "bold")).pack(anchor="w", padx=15, pady=(13, 8))
         # Dict of StringVars so refresh_dashboard() can update them later.
         self.info_vars = {key: tk.StringVar(value="—") for key in ("IP address", "MAC address", "Operating system", "Network distance", "Service info")}
         for key, variable in self.info_vars.items():
-            row = tk.Frame(info, bg="#081a2b")
+            row = tk.Frame(info, bg=self.PANEL2)
             row.pack(fill=tk.X, padx=15, pady=1)
-            tk.Label(row, text=key, width=18, anchor="w", bg="#081a2b", fg="#9fc2e5", font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=8, pady=6)
-            tk.Label(row, textvariable=variable, anchor="w", bg="#081a2b", fg="#e1efff", font=("Segoe UI", 9)).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=8)
+            tk.Label(row, text=key, width=18, anchor="w", bg=self.PANEL2, fg=self.MUTED, font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=8, pady=7)
+            tk.Label(row, textvariable=variable, anchor="w", bg=self.PANEL2, fg=self.FG, font=("Consolas", 9)).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=8)
 
         # Right: risk-assessment gauge.
-        risk = tk.Frame(tab, bg="#061321", highlightbackground="#1c4b74", highlightthickness=1)
+        risk = tk.Frame(tab, bg=self.PANEL, highlightbackground=self.BORDER, highlightthickness=1)
         risk.grid(row=0, column=1, sticky="nsew", pady=8)
-        tk.Label(risk, text="◉  Risk assessment", bg="#061321", fg="#4fe2e0", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=15, pady=12)
-        self.risk_canvas = tk.Canvas(risk, width=210, height=190, bg="#061321", highlightthickness=0)
+        tk.Label(risk, text="RISK ASSESSMENT", bg=self.PANEL, fg=self.MUTED, font=("Consolas", 9, "bold")).pack(anchor="w", padx=15, pady=(13, 8))
+        self.risk_canvas = tk.Canvas(risk, width=210, height=190, bg=self.PANEL, highlightthickness=0)
         self.risk_canvas.pack(side=tk.LEFT, padx=12, pady=2)
         self.risk_label = tk.StringVar(value="AWAITING\nSCAN")
-        self._draw_risk("#1686ff")
-        legend = tk.Frame(risk, bg="#061321")
+        self._draw_risk(self.ACCENT)
+        legend = tk.Frame(risk, bg=self.PANEL)
         legend.pack(side=tk.LEFT, fill=tk.Y, padx=4)
         self.risk_detail_var = tk.StringVar(value="Run a scan to assess\nopen services and scripts.")
-        tk.Label(legend, textvariable=self.risk_detail_var, justify=tk.LEFT, bg="#061321", fg="#bfd8f3", font=("Segoe UI", 10)).pack(anchor="w", pady=(53, 0))
+        tk.Label(legend, textvariable=self.risk_detail_var, justify=tk.LEFT, bg=self.PANEL, fg=self.MUTED, font=("Segoe UI", 10)).pack(anchor="w", pady=(53, 0))
 
     # -----------------------------------------------------------------------
     # _risk_assessment — Decide one severity label from scan results.
@@ -2069,7 +2070,7 @@ document.getElementById("filter").addEventListener("input", function () {{
             self.port_table.column(name, width=width, anchor="w")
         self.port_table.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
         # Row tags let us color open rows green and closed rows red.
-        self.port_table.tag_configure("open", foreground="#3ddc97")
+        self.port_table.tag_configure("open", foreground=self.HEALTHY)
         self.port_table.tag_configure("closed", foreground=self.ERROR)
 
     # -----------------------------------------------------------------------
@@ -2077,8 +2078,9 @@ document.getElementById("filter").addEventListener("input", function () {{
     # -----------------------------------------------------------------------
     def _build_v2_scripts(self, tab):
         """Create the read-only area used to display Nmap NSE script output."""
-        self.scripts_view = scrolledtext.ScrolledText(tab, state=tk.DISABLED, bg="#061321", fg="#d9eaff", insertbackground="#25b9ff",
-                                                       relief=tk.FLAT, font=("Cascadia Mono", 10), padx=14, pady=14)
+        self.scripts_view = scrolledtext.ScrolledText(tab, state=tk.DISABLED, bg=self.PANEL2, fg=self.FG, insertbackground=self.ACCENT,
+                                                       relief=tk.FLAT, font=("Cascadia Mono", 10), padx=14, pady=14,
+                                                       highlightbackground=self.BORDER, highlightthickness=1)
         self.scripts_view.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
 
     # -----------------------------------------------------------------------
@@ -2087,21 +2089,23 @@ document.getElementById("filter").addEventListener("input", function () {{
     # -----------------------------------------------------------------------
     def _build_v2_live(self, tab):
         """Create the command preview, progress bar, host info, and live output tab."""
-        top = tk.Frame(tab, bg="#020b16")
+        top = tk.Frame(tab, bg=self.BG)
         top.pack(fill=tk.X, padx=8, pady=(8, 0))
         self.command_var = tk.StringVar(value="Waiting for scan configuration…")
-        tk.Label(top, text="COMMAND", bg="#020b16", fg="#78a5d2", font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT, padx=(0, 8))
-        tk.Label(top, textvariable=self.command_var, bg="#061321", fg="#75c6ff", anchor="w", font=("Cascadia Mono", 9), padx=10, pady=8).pack(side=tk.LEFT, fill=tk.X, expand=True)
+        tk.Label(top, text="COMMAND", bg=self.BG, fg=self.MUTED, font=("Consolas", 9, "bold")).pack(side=tk.LEFT, padx=(0, 8))
+        tk.Label(top, textvariable=self.command_var, bg=self.PANEL2, fg=self.ACCENT, anchor="w", font=("Cascadia Mono", 9), padx=10, pady=8).pack(side=tk.LEFT, fill=tk.X, expand=True)
         self.progress = ttk.Progressbar(top, mode="indeterminate", length=160, style="Nighthawk.Horizontal.TProgressbar")
         self.progress.pack(side=tk.RIGHT, padx=(10, 0))
+        self.progress.pack_forget()
 
-        self.live_info_label = tk.Label(tab, text="MAC: ---  |  OS: ---", bg="#020b16", fg="#9bbad8", font=("Segoe UI", 9, "bold"), anchor="w")
+        self.live_info_label = tk.Label(tab, text="MAC: ---  |  OS: ---", bg=self.BG, fg=self.MUTED, font=("Consolas", 9), anchor="w")
         self.live_info_label.pack(fill=tk.X, padx=8, pady=8)
 
-        self.output = scrolledtext.ScrolledText(tab, state=tk.DISABLED, bg="#030d18", fg="#c8e0ff", insertbackground="#25b9ff",
-                                                relief=tk.FLAT, font=("Cascadia Mono", 10), padx=14, pady=14)
+        self.output = scrolledtext.ScrolledText(tab, state=tk.DISABLED, bg=self.PANEL2, fg=self.FG, insertbackground=self.ACCENT,
+                                                relief=tk.FLAT, font=("Cascadia Mono", 10), padx=14, pady=14,
+                                                highlightbackground=self.BORDER, highlightthickness=1)
         self.output.pack(fill=tk.BOTH, expand=True, padx=8, pady=(0, 8))
-        self.output.tag_config("open", foreground="#3ddc97")
+        self.output.tag_config("open", foreground=self.HEALTHY)
         self.output.tag_config("closed", foreground=self.WARN)
         self.output.tag_config("error", foreground=self.ERROR)
 
@@ -2110,25 +2114,26 @@ document.getElementById("filter").addEventListener("input", function () {{
     # -----------------------------------------------------------------------
     def _build_v2_export(self, tab):
         """Create buttons for opening the latest report and its export formats."""
-        tk.Label(tab, text="Export completed scan reports", bg="#020b16", fg="#d7e9ff", font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=22, pady=(24, 5))
-        tk.Label(tab, text="NIGHTHAWK saves HTML, JSON, CSV, and TXT reports in the reports folder.", bg="#020b16", fg="#91b2d3", font=("Segoe UI", 10)).pack(anchor="w", padx=22, pady=(0, 20))
+        tk.Label(tab, text="Export completed scan reports", bg=self.BG, fg=self.FG, font=("Consolas", 16, "bold")).pack(anchor="w", padx=22, pady=(26, 5))
+        tk.Label(tab, text="NIGHTHAWK writes HTML, JSON, CSV, and TXT reports to the reports folder.", bg=self.BG, fg=self.MUTED, font=("Segoe UI", 10)).pack(anchor="w", padx=22, pady=(0, 22))
 
-        buttons = tk.Frame(tab, bg="#020b16")
+        buttons = tk.Frame(tab, bg=self.BG)
         buttons.pack(anchor="w", padx=22)
 
         self.open_report_btn = tk.Button(buttons, text="OPEN HTML REPORT", command=self.open_report,
-                                          bg="#1265df", fg="white", relief=tk.FLAT,
-                                          font=("Segoe UI", 10, "bold"), padx=14, pady=10, state=tk.DISABLED)
+                                          bg=self.ACCENT, fg=self.ON_ACCENT, activebackground=self.ACCENT_HOVER,
+                                          activeforeground=self.ON_ACCENT, relief=tk.FLAT,
+                                          font=("Consolas", 10, "bold"), padx=14, pady=10, state=tk.DISABLED)
         self.open_report_btn.pack(side=tk.LEFT, padx=(0, 8))
 
         for label, ext in (("JSON", "json"), ("CSV", "csv"), ("TXT", "txt")):
             tk.Button(buttons, text=label, command=lambda e=ext: self.export_report(e),
-                      bg="#0b2948", fg="#c8e2ff", relief=tk.FLAT,
-                      font=("Segoe UI", 10, "bold"), padx=14, pady=10).pack(side=tk.LEFT, padx=4)
+                      bg=self.PANEL3, fg=self.FG, activebackground=self.SELECT, activeforeground=self.ACCENT,
+                      relief=tk.FLAT, font=("Consolas", 10, "bold"), padx=14, pady=10).pack(side=tk.LEFT, padx=4)
 
         tk.Button(tab, text="SCAN HISTORY & DIFF", command=self.show_history,
-                  bg="#0b2948", fg="#c8e2ff", relief=tk.FLAT,
-                  font=("Segoe UI", 10, "bold"), padx=14, pady=10).pack(anchor="w", padx=22, pady=16)
+                  bg=self.PANEL3, fg=self.FG, activebackground=self.SELECT, activeforeground=self.ACCENT,
+                  relief=tk.FLAT, font=("Consolas", 10, "bold"), padx=14, pady=10).pack(anchor="w", padx=22, pady=18)
 
     # -----------------------------------------------------------------------
     # scan_type_changed (Version 2 override)
@@ -2167,6 +2172,8 @@ document.getElementById("filter").addEventListener("input", function () {{
         self.host_count_var.set("1")
         self.open_ports_var.set(str(len(open_ports)))
         self.findings_var.set(str(len(scripts)))
+        if hasattr(self, "findings_value_label"):
+            self.findings_value_label.config(fg=self.ERROR if scripts else self.MUTED)
         if hasattr(self, "scan_started_at"):
             self.duration_var.set(str(datetime.datetime.now() - self.scan_started_at).split(".")[0])
 
@@ -2349,19 +2356,19 @@ document.getElementById('filter').addEventListener('input', function() {{ const 
         # Header block.
         header = tk.Frame(win, bg=self.BG)
         header.grid(row=0, column=0, sticky="ew", padx=18, pady=(16, 10))
-        tk.Label(header, text="Scan history", bg=self.BG, fg=self.FG, font=("Segoe UI", 18, "bold")).pack(anchor="w")
+        tk.Label(header, text="Scan history", bg=self.BG, fg=self.FG, font=("Consolas", 18, "bold")).pack(anchor="w")
         tk.Label(header, text="Select two reports to compare. Double-click one report to open its HTML view.", bg=self.BG, fg=self.MUTED, font=("Segoe UI", 10)).pack(anchor="w", pady=(2, 0))
 
         # Two-panel layout (adjustable divider).
         workspace = tk.PanedWindow(win, orient=tk.HORIZONTAL, sashwidth=5, bg=self.BG, bd=0, sashrelief=tk.FLAT)
         workspace.grid(row=1, column=0, sticky="nsew", padx=18, pady=(0, 12))
-        left = tk.Frame(workspace, bg=self.PANEL, highlightbackground="#914187", highlightthickness=1)
-        right = tk.Frame(workspace, bg=self.PANEL, highlightbackground="#914187", highlightthickness=1)
+        left = tk.Frame(workspace, bg=self.PANEL, highlightbackground=self.BORDER, highlightthickness=1)
+        right = tk.Frame(workspace, bg=self.PANEL, highlightbackground=self.BORDER, highlightthickness=1)
         workspace.add(left, minsize=410)
         workspace.add(right, minsize=390)
 
         # --- LEFT: report list as a Treeview -----------------------------
-        tk.Label(left, text="Completed scans", bg=self.PANEL, fg=self.FG, font=("Segoe UI", 11, "bold")).pack(anchor="w", padx=14, pady=(12, 7))
+        tk.Label(left, text="Completed scans", bg=self.PANEL, fg=self.FG, font=("Consolas", 11, "bold")).pack(anchor="w", padx=14, pady=(12, 7))
         columns = ("date", "target", "ports", "open")
         history = ttk.Treeview(left, columns=columns, show="headings", selectmode="extended", style="Nighthawk.Treeview")
         for key, heading, width in (("date", "DATE", 145), ("target", "TARGET", 135), ("ports", "PORTS", 100), ("open", "OPEN", 55)):
@@ -2384,20 +2391,20 @@ document.getElementById('filter').addEventListener('input', function() {{ const 
                 report_files[item_id] = report
 
         # --- RIGHT: diff view --------------------------------------------
-        tk.Label(right, text="Comparison", bg=self.PANEL, fg=self.FG, font=("Segoe UI", 11, "bold")).pack(anchor="w", padx=14, pady=(12, 7))
-        diff = scrolledtext.ScrolledText(right, state=tk.DISABLED, bg="#240018", fg=self.FG, insertbackground=self.ACCENT,
+        tk.Label(right, text="Comparison", bg=self.PANEL, fg=self.FG, font=("Consolas", 11, "bold")).pack(anchor="w", padx=14, pady=(12, 7))
+        diff = scrolledtext.ScrolledText(right, state=tk.DISABLED, bg=self.PANEL2, fg=self.FG, insertbackground=self.ACCENT,
                                          relief=tk.FLAT, font=("Cascadia Mono", 10), padx=14, pady=12)
         diff.pack(fill=tk.BOTH, expand=True, padx=12, pady=(0, 12))
-        diff.tag_config("added", foreground="#3ddc97")
+        diff.tag_config("added", foreground=self.HEALTHY)
         diff.tag_config("removed", foreground=self.ERROR)
-        diff.tag_config("heading", foreground="#f2c8ed", font=("Cascadia Mono", 10, "bold"))
+        diff.tag_config("heading", foreground=self.ACCENT, font=("Cascadia Mono", 10, "bold"))
         diff.tag_config("muted", foreground=self.MUTED)
 
         # --- BOTTOM: actions ---------------------------------------------
         actions = tk.Frame(win, bg=self.BG)
         actions.grid(row=2, column=0, sticky="ew", padx=18, pady=(0, 16))
         selection_note = tk.StringVar(value="Choose two reports to compare their open ports.")
-        tk.Label(actions, textvariable=selection_note, bg=self.BG, fg=self.MUTED, font=("Segoe UI", 9)).pack(side=tk.LEFT)
+        tk.Label(actions, textvariable=selection_note, bg=self.BG, fg=self.MUTED, font=("Segoe UI", 10)).pack(side=tk.LEFT)
 
         def selected_reports():
             """Return the file paths for every currently selected row."""
@@ -2453,8 +2460,12 @@ document.getElementById('filter').addEventListener('input', function() {{ const 
                     webbrowser.open(report.as_uri())
 
         history.bind("<Double-1>", open_selected)
-        tk.Button(actions, text="OPEN REPORT", command=open_selected, bg="#3d1231", fg=self.FG, relief=tk.FLAT, font=("Segoe UI", 9, "bold"), padx=13, pady=8).pack(side=tk.RIGHT, padx=(8, 0))
-        tk.Button(actions, text="COMPARE SELECTED", command=write_diff, bg=self.ACCENT, fg="white", relief=tk.FLAT, font=("Segoe UI", 9, "bold"), padx=13, pady=8).pack(side=tk.RIGHT)
+        tk.Button(actions, text="OPEN REPORT", command=open_selected, bg=self.PANEL3, fg=self.FG,
+                  activebackground=self.SELECT, activeforeground=self.ACCENT, relief=tk.FLAT,
+                  font=("Consolas", 9, "bold"), padx=13, pady=8).pack(side=tk.RIGHT, padx=(8, 0))
+        tk.Button(actions, text="COMPARE SELECTED", command=write_diff, bg=self.ACCENT, fg=self.ON_ACCENT,
+                  activebackground=self.ACCENT_HOVER, activeforeground=self.ON_ACCENT, relief=tk.FLAT,
+                  font=("Consolas", 9, "bold"), padx=13, pady=8).pack(side=tk.RIGHT)
         diff.tag_config("added", foreground=self.HEALTHY)
         diff.tag_config("removed", foreground=self.ERROR)
         diff.tag_config("heading", foreground=self.ACCENT, font=("Cascadia Mono", 10, "bold"))
