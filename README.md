@@ -47,7 +47,7 @@ Version 2 rebuilds the entire interface as a **security-operations dashboard** w
 | **Summary Cards** | Hosts up · Open ports · Script findings · Scan duration, updated live after every scan |
 | **Target Info Panel** | IP · MAC · OS · Network distance · Service info, populated from Nmap XML |
 | **Retained** | All scan types, presets, custom flags, NSE scripts, and subnet discovery |
-| **Themes** | Muted charcoal / phosphor-green dark theme and a warm parchment light theme, switchable from the header button |
+| **Themes** | Muted blue-charcoal / steel-blue dark theme and a warm parchment light theme, switchable from the header button |
 
 ---
 
