@@ -57,39 +57,39 @@ class NighthawkApp:
 
     # -----------------------------------------------------------------------
     # COLOR PALETTES — muted terminal look.
-    #   dark  → charcoal black with a dim phosphor green accent.
-    #   light → warm parchment with an ink-brown and moss-green accent.
+    #   dark  → blue-charcoal black with a dim steel-blue accent.
+    #   light → warm parchment with an ink-brown and slate-blue accent.
     # Switching themes remaps the whole widget tree (see _apply_v2_palette).
     # -----------------------------------------------------------------------
     PALETTES = {
         "dark": {
-            "BG": "#0e100f", "PANEL": "#151815", "PANEL2": "#111311",
-            "PANEL3": "#1c201c", "BORDER": "#2b312b", "BORDER2": "#1e231e",
-            "FG": "#d9d7cc", "MUTED": "#8b9186", "ACCENT": "#9db88f",
-            "ACCENT_HOVER": "#b3c9a6", "WARN": "#c4a35f", "ERROR": "#b46a5e",
-            "ORANGE": "#bd8a58", "CRITICAL": "#7b3a34", "HEALTHY": "#7f9c6f",
-            "SELECT": "#232a24", "ON_ACCENT": "#101410",
+            "BG": "#0d1116", "PANEL": "#141a21", "PANEL2": "#10161c",
+            "PANEL3": "#1b232b", "BORDER": "#2a343d", "BORDER2": "#1d252c",
+            "FG": "#d6dae0", "MUTED": "#8b949e", "ACCENT": "#7fa6c9",
+            "ACCENT_HOVER": "#95b8d6", "WARN": "#c4a35f", "ERROR": "#b46a5e",
+            "ORANGE": "#bd8a58", "CRITICAL": "#7b3a34", "HEALTHY": "#6fa6b3",
+            "SELECT": "#22303c", "ON_ACCENT": "#0b1015",
         },
         "light": {
             "BG": "#e8e1d3", "PANEL": "#f3eee3", "PANEL2": "#ece5d8",
             "PANEL3": "#ded6c6", "BORDER": "#c9bea8", "BORDER2": "#d6cdba",
-            "FG": "#2b2721", "MUTED": "#6e6659", "ACCENT": "#4f6b4a",
-            "ACCENT_HOVER": "#5e7c58", "WARN": "#8a6a2b", "ERROR": "#9a4a3e",
-            "ORANGE": "#97693a", "CRITICAL": "#6d312b", "HEALTHY": "#55744f",
+            "FG": "#2b2721", "MUTED": "#6e6659", "ACCENT": "#46647f",
+            "ACCENT_HOVER": "#56788f", "WARN": "#8a6a2b", "ERROR": "#9a4a3e",
+            "ORANGE": "#97693a", "CRITICAL": "#6d312b", "HEALTHY": "#4d7883",
             "SELECT": "#dcd4c3", "ON_ACCENT": "#f4efe4",
         },
     }
 
-    BG = "#0e100f"        # Main background (charcoal black).
-    PANEL = "#151815"     # Panel background (dark gray-green).
-    FG = "#d9d7cc"        # Main foreground text (warm bone).
-    MUTED = "#8b9186"     # Secondary/muted text (sage gray).
-    ACCENT = "#9db88f"    # Accent/primary color (dim phosphor green).
+    BG = "#0d1116"        # Main background (blue-charcoal black).
+    PANEL = "#141a21"     # Panel background (dark blue-gray).
+    FG = "#d6dae0"        # Main foreground text (cool bone).
+    MUTED = "#8b949e"     # Secondary/muted text (cool gray).
+    ACCENT = "#7fa6c9"    # Accent/primary color (dim steel blue).
     WARN = "#c4a35f"      # Warning color (dim brass).
     ERROR = "#b46a5e"     # Error color (muted brick).
     ORANGE = "#bd8a58"    # "Review" risk color (dim amber).
     CRITICAL = "#7b3a34"  # Critical risk color (deep oxblood).
-    HEALTHY = "#7f9c6f"   # Healthy/safe color (moss green).
+    HEALTHY = "#6fa6b3"   # Healthy/open color (muted cyan-blue).
 
     # -----------------------------------------------------------------------
     # INPUT LIMITS — Maximum lengths allowed for user input.
@@ -414,7 +414,7 @@ class NighthawkApp:
                                                 font=("Consolas", 10), relief=tk.FLAT, padx=10, pady=10)
         self.output.pack(fill=tk.BOTH, expand=True, padx=16, pady=(4, 10))
 
-        # Tags let us color certain lines (open = green, closed = red, errors = yellow).
+        # Tags let us color certain lines (open = cyan, closed = red, errors = yellow).
         self.output.tag_config("open", foreground="#20e08a")
         self.output.tag_config("closed", foreground="#ff6b6b")
         self.output.tag_config("error", foreground="#ffcc66")
@@ -2074,7 +2074,7 @@ document.getElementById("filter").addEventListener("input", function () {{
             self.port_table.heading(name, text=name.upper())
             self.port_table.column(name, width=width, anchor="w")
         self.port_table.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
-        # Row tags let us color open rows green and closed rows red.
+        # Row tags let us color open rows cyan and closed rows red.
         self.port_table.tag_configure("open", foreground=self.HEALTHY)
         self.port_table.tag_configure("closed", foreground=self.ERROR)
 
