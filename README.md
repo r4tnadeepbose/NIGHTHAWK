@@ -43,11 +43,11 @@ Version 2 rebuilds the entire interface as a **security-operations dashboard** w
 | **Dashboard** | Split layout — sidebar for scan configuration, main panel with Overview / Ports / Scripts / Live / Export tabs |
 | **Risk Assessment** | A shared risk engine (Clear · Exposed · Review · High Risk · Critical) now drives both the desktop gauge **and** the HTML report badge |
 | **Scan History** | Compare any two saved scans side-by-side; newly opened and closed ports are highlighted |
-| **HTML Reports** | Same layout, logo, severity colors, filter box, and export buttons as the in-app dashboard |
+| **HTML Reports** | Same layout, logo, severity colors, filter box, export buttons, and a built-in dark / light toggle as the in-app dashboard |
 | **Summary Cards** | Hosts up · Open ports · Script findings · Scan duration, updated live after every scan |
 | **Target Info Panel** | IP · MAC · OS · Network distance · Service info, populated from Nmap XML |
 | **Retained** | All scan types, presets, custom flags, NSE scripts, and subnet discovery |
-| **Themes** | Dark SOC palette and a daylight theme, switchable from the ☀/☾ header button |
+| **Themes** | Muted charcoal / phosphor-green dark theme and a warm parchment light theme, switchable from the header button |
 
 ---
 
@@ -66,7 +66,7 @@ Version 2 rebuilds the entire interface as a **security-operations dashboard** w
 
 ### Reporting
 - **Four formats written per scan:** `.html` · `.json` · `.csv` · `.txt` — all saved to `reports/`.
-- **Interactive HTML report** — severity badge, summary cards, target metadata, port table, script output, live filter box, and JSON/CSV/TXT export buttons.
+- **Interactive HTML report** — severity badge, summary cards, target metadata, port table, script output, live filter box, JSON/CSV/TXT export buttons, and a dark / light theme toggle that remembers your choice.
 - **Scan history & diff** — pick any two past scans, see which ports opened or closed between them.
 
 ### Usability
@@ -266,7 +266,7 @@ sudo python3 scanner.py
 <p align="center">
   <img src="screenshots/nighthawk-overview-light.png" alt="NIGHTHAWK dashboard in the light theme" width="900">
   <br>
-  <sub>The daylight theme — same dashboard, switched with the ☀ Light / ☾ Dark button.</sub>
+  <sub>The light theme — same dashboard, switched with the Light / Dark button in the header.</sub>
 </p>
 
 ### Basic scan
@@ -342,7 +342,7 @@ reports/nighthawk_YYYYMMDD_HHMMSS_<id>.{html,json,csv,txt}
 
 ### What's inside the HTML report
 
-- **Header** — logo, target, port range, timestamp, `SCAN COMPLETE` badge.
+- **Header** — logo, target, port range, timestamp, `SCAN COMPLETE` badge, and a dark / light theme toggle.
 - **Summary cards** — hosts up · open ports · script findings · ports scanned.
 - **Target information** — IP · MAC · OS · network distance.
 - **Risk assessment** — the same Clear / Exposed / Review / High Risk / Critical badge shown in the app.
@@ -390,7 +390,8 @@ Only scan hosts you own or have permission to test.
 NIGHTHAWK/
 │
 ├── scanner.py               ← the entire application (single file)
-├── logo.png                 ← dashboard & report logo
+├── logo.png                 ← original dashboard & report logo
+├── logo_muted.png           ← muted mark used by the dashboard and report
 ├── nighthawk_config.json    ← saved user preferences (created on first run)
 ├── requirements.txt         ← dependency checker (executable)
 ├── install.sh               ← Linux system-wide installer
