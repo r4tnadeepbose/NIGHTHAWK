@@ -879,6 +879,8 @@ nmap -sV -Pn -p 80 --open -v -script http-enum 192.168.1.1
         # Lock/unlock buttons and start the spinner.
         self.start_btn.config(state=tk.DISABLED)
         self.stop_btn.config(state=tk.NORMAL)
+        self.progress.pack(side=tk.RIGHT, padx=(10, 0))
+        self.progress.configure(mode="indeterminate")
         self.progress.start(10)  # Animate the progress bar every 10ms.
         self.status_label.config(text="RUNNING // REPORT CAPTURE ACTIVE", fg=self.ACCENT)
 
@@ -895,6 +897,8 @@ nmap -sV -Pn -p 80 --open -v -script http-enum 192.168.1.1
         self.is_scanning = True
         self.start_btn.config(state=tk.DISABLED)
         self.status_label.config(text="DISCOVERING HOSTS...", fg=self.WARN)
+        self.progress.pack(side=tk.RIGHT, padx=(10, 0))
+        self.progress.configure(mode="indeterminate")
         self.progress.start(10)
         self.update_ui(self.log, f"[*] Running Ping Sweep on {subnet}...")
 
@@ -1520,7 +1524,8 @@ document.getElementById("filter").addEventListener("input", function () {{
         """Restore buttons and progress indicators after any scan completion state."""
         self.is_scanning = False
         self.progress.stop()
-        self.progress["value"] = 0
+        self.progress.configure(mode="determinate", value=0)
+        self.progress.pack_forget()
         self.start_btn.config(state=tk.NORMAL)
         self.stop_btn.config(state=tk.DISABLED)
         self.open_report_btn.config(state=tk.NORMAL if self.last_report else tk.DISABLED)
@@ -2183,6 +2188,8 @@ document.getElementById("filter").addEventListener("input", function () {{
         self.info_vars["Operating system"].set(info.get("os", "Unknown"))
         self.info_vars["Network distance"].set(info.get("distance", "Unknown"))
         self.info_vars["Service info"].set(info.get("service_info", "Unknown"))
+        if hasattr(self, "live_info_label"):
+            self.live_info_label.config(text=f"MAC: {info.get('mac', '---')}  |  OS: {info.get('os', '---')}")
 
         # Ports table — clear then re-populate.
         for item in self.port_table.get_children():
