@@ -1566,66 +1566,72 @@ document.getElementById("filter").addEventListener("input", function () {{
         self.root.title("NIGHTHAWK 2.0.0 — Advanced Network Scanner")
         self.root.geometry("1530x960")
         self.root.minsize(1180, 760)
-        self.root.configure(bg="#020b16")
-        self.root.grid_rowconfigure(1, weight=1)   # Row 1 (main shell) grows.
+        self.root.configure(bg=self.BG)
+        self.root.grid_rowconfigure(2, weight=1)   # Row 2 (main shell) grows.
         self.root.grid_columnconfigure(0, weight=1)
 
         # --- ttk Style definitions: Notebook, Treeview, ProgressBar -----
         self._apply_ttk_styles()
 
         # --- HEADER -------------------------------------------------------
-        header = tk.Frame(self.root, bg="#020b16", height=74)
+        header = tk.Frame(self.root, bg=self.BG, height=74)
         header.grid(row=0, column=0, sticky="ew")
         header.grid_columnconfigure(8, weight=1)  # Push "NMAP GUI" to the right.
 
-        # Logo image (logo.png next to this file). Fallback to a letter "N".
-        logo_path = Path(__file__).with_name("logo.png")
+        # Logo image (muted mark next to this file). Fallback to a letter "N".
+        logo_path = Path(__file__).with_name("logo_muted.png")
+        if not logo_path.exists():
+            logo_path = Path(__file__).with_name("logo.png")
         try:
             self.logo_image = tk.PhotoImage(file=logo_path).subsample(8, 8)  # Shrink 8x.
-            tk.Label(header, image=self.logo_image, bg="#020b16").grid(row=0, column=0, padx=(18, 8), pady=6)
+            tk.Label(header, image=self.logo_image, bg=self.BG).grid(row=0, column=0, padx=(12, 10), pady=6)
         except tk.TclError:
-            tk.Label(header, text="N", bg="#020b16", fg=self.ACCENT, font=("Segoe UI", 26, "bold")).grid(row=0, column=0, padx=(18, 8), pady=8)
+            tk.Label(header, text="N", bg=self.BG, fg=self.ACCENT, font=("Consolas", 26, "bold")).grid(row=0, column=0, padx=(12, 10), pady=8)
 
         # Brand text.
-        brand = tk.Frame(header, bg="#020b16")
+        brand = tk.Frame(header, bg=self.BG)
         brand.grid(row=0, column=1, sticky="w")
-        tk.Label(brand, text="NIGHTHAWK", bg="#020b16", fg="#47caff", font=("Segoe UI", 23, "bold")).pack(anchor="w")
-        tk.Label(brand, text="ADVANCED NETWORK SCANNER  •  VERSION 2", bg="#020b16", fg="#5e94c8", font=("Segoe UI", 8, "bold")).pack(anchor="w")
+        tk.Label(brand, text="NIGHTHAWK", bg=self.BG, fg=self.ACCENT, font=("Consolas", 22, "bold")).pack(anchor="w")
+        tk.Label(brand, text="ADVANCED NETWORK SCANNER  ·  VERSION 2", bg=self.BG, fg=self.MUTED, font=("Consolas", 8)).pack(anchor="w")
 
         # Navigation buttons: Scan / Reports / Settings / About.
         self._v2_nav_button(header, "◉\nScan", lambda: self.dashboard_tabs.select(self.overview_tab), True).grid(row=0, column=2, padx=(48, 0), sticky="ns")
         self._v2_nav_button(header, "▤\nReports", self.show_history).grid(row=0, column=3, sticky="ns")
         self._v2_nav_button(header, "⚙\nSettings", self.show_settings_hint).grid(row=0, column=4, sticky="ns")
         self._v2_nav_button(header, "ⓘ\nAbout", self.show_about).grid(row=0, column=5, sticky="ns")
-        self.theme_btn = tk.Button(header, text="☀  LIGHT", command=self.toggle_theme,
-                                   bg="#020b16", fg="#9fc9f4", activebackground="#164f96",
-                                   activeforeground="white", relief=tk.FLAT, bd=0,
-                                   padx=14, pady=10, font=("Segoe UI", 9, "bold"),
+        self.theme_btn = tk.Button(header, text="LIGHT", command=self.toggle_theme,
+                                   bg=self.BG, fg=self.MUTED, activebackground=self.PANEL3,
+                                   activeforeground=self.ACCENT, relief=tk.FLAT, bd=0,
+                                   padx=14, pady=10, font=("Consolas", 9, "bold"),
+                                   highlightbackground=self.BORDER, highlightthickness=1,
                                    cursor="hand2")
         self.theme_btn.grid(row=0, column=6, padx=(20, 0), sticky="ns")
-        tk.Label(header, text="NMAP GUI", bg="#020b16", fg="#5f82a6", font=("Segoe UI", 9, "bold")).grid(row=0, column=8, sticky="e", padx=22)
+        tk.Label(header, text="NMAP GUI", bg=self.BG, fg=self.MUTED, font=("Consolas", 9)).grid(row=0, column=8, sticky="e", padx=12)
+
+        # Thin rule between the header and the workspace.
+        tk.Frame(self.root, bg=self.BORDER, height=1).grid(row=1, column=0, sticky="ew")
 
         # --- MAIN SHELL: Sidebar (left) + Content (right) ----------------
-        shell = tk.Frame(self.root, bg="#020b16")
-        shell.grid(row=1, column=0, sticky="nsew", padx=10, pady=(0, 10))
+        shell = tk.Frame(self.root, bg=self.BG)
+        shell.grid(row=2, column=0, sticky="nsew", padx=12, pady=(10, 12))
         shell.grid_rowconfigure(0, weight=1)
         shell.grid_columnconfigure(1, weight=1)  # Right column is stretchy.
 
         # Left sidebar (fixed width 322px).
-        sidebar = tk.Frame(shell, bg="#05111f", width=322, highlightbackground="#1260a8", highlightthickness=1)
-        sidebar.grid(row=0, column=0, sticky="nsw", padx=(0, 10))
+        sidebar = tk.Frame(shell, bg=self.PANEL, width=322, highlightbackground=self.BORDER, highlightthickness=1)
+        sidebar.grid(row=0, column=0, sticky="nsw", padx=(0, 12))
         sidebar.grid_propagate(False)  # Force the width to stay fixed.
         self._build_v2_sidebar(sidebar)
 
         # Right content area (stretchy).
-        content = tk.Frame(shell, bg="#020b16")
+        content = tk.Frame(shell, bg=self.BG)
         content.grid(row=0, column=1, sticky="nsew")
         content.grid_rowconfigure(4, weight=1)   # The tab area expands.
         content.grid_columnconfigure(0, weight=1)
         self._build_v2_content(content)
 
-        # Apply the black/gray SOC palette to the whole window (this rewrites
-        # a bunch of hard-coded blue colors left over from the layout code).
+        # Apply the active palette to the whole window (this rewrites the
+        # remaining hard-coded colors in legacy dialogs and helper widgets).
         self._apply_v2_palette()
         self.scan_type_changed(self.scan_type.get())
 
@@ -1655,7 +1661,7 @@ document.getElementById("filter").addEventListener("input", function () {{
             self.port_table.tag_configure("open", foreground=self.HEALTHY)
             self.port_table.tag_configure("closed", foreground=self.ERROR)
         if hasattr(self, "theme_btn"):
-            self.theme_btn.configure(text="☀  LIGHT" if self.dark else "☾  DARK")
+            self.theme_btn.configure(text="LIGHT" if self.dark else "DARK")
 
     def _apply_ttk_styles(self):
         """Configure the ttk notebook, table, and progress bar for the active palette."""
@@ -1664,20 +1670,25 @@ document.getElementById("filter").addEventListener("input", function () {{
             style.theme_use("clam")
         except tk.TclError:
             pass
-        style.configure("Nighthawk.Horizontal.TProgressbar", troughcolor=self.PANEL,
-                        background=self.ACCENT, bordercolor=self.PANEL,
+        style.configure("Nighthawk.Horizontal.TProgressbar", troughcolor=self.BG,
+                        background=self.ACCENT, bordercolor=self.PANEL2,
                         lightcolor=self.ACCENT, darkcolor=self.ACCENT)
-        style.configure("Nighthawk.TNotebook", background=self.BG, borderwidth=0)
-        style.configure("Nighthawk.TNotebook.Tab", background=self.PANEL, foreground=self.MUTED,
-                        padding=(22, 10), font=("Segoe UI", 10, "bold"))
-        style.map("Nighthawk.TNotebook.Tab", background=[("selected", self.ACCENT)],
-                  foreground=[("selected", "white")])
+        style.configure("Nighthawk.TNotebook", background=self.BG, borderwidth=0, tabmargins=(0, 0, 0, 0))
+        style.configure("Nighthawk.TNotebook.Tab", background=self.PANEL2, foreground=self.MUTED,
+                        padding=(22, 10), font=("Consolas", 9, "bold"), borderwidth=0)
+        style.map("Nighthawk.TNotebook.Tab",
+                  background=[("selected", self.PANEL), ("active", self.PANEL2)],
+                  foreground=[("selected", self.ACCENT), ("active", self.FG)],
+                  lightcolor=[("selected", self.PANEL), ("active", self.PANEL2)],
+                  darkcolor=[("selected", self.PANEL), ("active", self.PANEL2)])
         style.configure("Nighthawk.Treeview", background=self.PANEL, fieldbackground=self.PANEL,
-                        foreground=self.FG, rowheight=28, borderwidth=0,
-                        font=("Segoe UI", 10))
-        style.configure("Nighthawk.Treeview.Heading", background=self.PANEL3, foreground=self.FG,
-                        font=("Segoe UI", 9, "bold"), relief=tk.FLAT)
-        style.map("Nighthawk.Treeview", background=[("selected", self.SELECT)])
+                        foreground=self.FG, rowheight=30, borderwidth=0,
+                        font=("Consolas", 10))
+        style.configure("Nighthawk.Treeview.Heading", background=self.PANEL3, foreground=self.MUTED,
+                        font=("Consolas", 9, "bold"), relief=tk.FLAT, borderwidth=0)
+        style.map("Nighthawk.Treeview",
+                  background=[("selected", self.SELECT)],
+                  foreground=[("selected", self.ACCENT)])
 
     def _theme_color_map(self):
         """Return every known legacy color mapped to the active palette color."""
@@ -1755,9 +1766,9 @@ document.getElementById("filter").addEventListener("input", function () {{
         # Colored arc on top of it (270 degrees).
         self.risk_canvas.create_arc(37, 25, 173, 161, start=90, extent=270, style=tk.ARC, outline=color, width=9)
         # Center label text (e.g., "HIGH RISK").
-        self.risk_canvas.create_text(105, 84, text=self.risk_label.get(), fill=color, font=("Segoe UI", 13, "bold"), justify=tk.CENTER)
+        self.risk_canvas.create_text(105, 84, text=self.risk_label.get(), fill=color, font=("Consolas", 12, "bold"), justify=tk.CENTER)
         # Small caption under the label.
-        self.risk_canvas.create_text(105, 125, text="assessment", fill=self.MUTED, font=("Segoe UI", 8), justify=tk.CENTER)
+        self.risk_canvas.create_text(105, 125, text="assessment", fill=self.MUTED, font=("Consolas", 8), justify=tk.CENTER)
 
     # -----------------------------------------------------------------------
     # _v2_nav_button — Small helper to make a top-nav button.
@@ -1765,38 +1776,59 @@ document.getElementById("filter").addEventListener("input", function () {{
     def _v2_nav_button(self, parent, text, command, active=False):
         """Create one small top-navigation button for the Version 2 header."""
         return tk.Button(parent, text=text, command=command,
-                         bg="#153b70" if active else "#020b16",
-                         fg="#e3f2ff" if active else "#9fc9f4",
-                         activebackground="#164f96", activeforeground="white",
+                         bg=self.PANEL3 if active else self.BG,
+                         fg=self.ACCENT if active else self.MUTED,
+                         activebackground=self.PANEL3, activeforeground=self.ACCENT,
                          relief=tk.FLAT, bd=0, padx=22, pady=12,
-                         font=("Segoe UI", 10, "bold"), justify=tk.CENTER, cursor="hand2")
+                         font=("Consolas", 9, "bold"), justify=tk.CENTER, cursor="hand2")
 
     # -----------------------------------------------------------------------
     # _v2_title — Section heading inside a panel.
     # -----------------------------------------------------------------------
     def _v2_title(self, parent, text):
         """Add a readable section heading inside a Version 2 panel."""
-        tk.Label(parent, text=text, bg=parent.cget("bg"), fg="#d7e9ff",
-                 font=("Segoe UI", 11, "bold")).pack(anchor="w", padx=14, pady=(13, 6))
+        tk.Label(parent, text=text.upper(), bg=parent.cget("bg"), fg=self.MUTED,
+                 font=("Consolas", 9, "bold")).pack(anchor="w", padx=15, pady=(14, 8))
 
     # -----------------------------------------------------------------------
     # _v2_field — Place a label above a form widget and pack the widget.
     # -----------------------------------------------------------------------
     def _v2_field(self, parent, label, widget):
         """Place a plain-language field label directly above a form widget."""
-        tk.Label(parent, text=label, bg="#05111f", fg="#d7e9ff", font=("Segoe UI", 10, "bold")).pack(anchor="w", padx=14, pady=(10, 4))
-        widget.pack(fill=tk.X, padx=14)
+        tk.Label(parent, text=label, bg=parent.cget("bg"), fg=self.MUTED, font=("Consolas", 8, "bold")).pack(anchor="w", padx=15, pady=(10, 4))
+        widget.pack(fill=tk.X, padx=15)
 
     # -----------------------------------------------------------------------
     # _v2_entry — Single-line text field with a starting value.
     # -----------------------------------------------------------------------
     def _v2_entry(self, parent, value=""):
         """Create a Version 2 text-entry control with a starting value."""
-        entry = tk.Entry(parent, bg="#091d31", fg="#e6f2ff", insertbackground="#25b9ff",
-                         relief=tk.FLAT, highlightthickness=1, highlightbackground="#27669c",
-                         highlightcolor="#25b9ff", font=("Segoe UI", 11))
+        entry = tk.Entry(parent, bg=self.PANEL2, fg=self.FG, insertbackground=self.ACCENT,
+                         relief=tk.FLAT, highlightthickness=1, highlightbackground=self.BORDER,
+                         highlightcolor=self.ACCENT, font=("Consolas", 10))
         entry.insert(0, value)
         return entry
+
+    # -----------------------------------------------------------------------
+    # _v2_checkbox — Flat terminal-style "[x]" toggle row.
+    # -----------------------------------------------------------------------
+    def _v2_checkbox(self, parent, label, variable):
+        """Create a flat checkbox that reads as a terminal-style [x] list row."""
+        def label_text():
+            return f"[{'x' if variable.get() else ' '}]  {label}"
+
+        button = tk.Checkbutton(parent, text=label_text(), variable=variable, indicatoron=False,
+                                bg=parent.cget("bg"), fg=self.FG, selectcolor=parent.cget("bg"),
+                                activebackground=self.PANEL3, activeforeground=self.ACCENT,
+                                relief=tk.FLAT, offrelief=tk.FLAT, overrelief=tk.FLAT, bd=0,
+                                highlightthickness=0, font=("Consolas", 9), anchor="w",
+                                padx=6, pady=3, cursor="hand2")
+
+        def refresh(*_):
+            button.config(text=label_text(), fg=self.ACCENT if variable.get() else self.FG)
+
+        variable.trace_add("write", refresh)
+        return button
 
     # -----------------------------------------------------------------------
     # _v2_menu — Styled drop-down menu.
@@ -1804,10 +1836,11 @@ document.getElementById("filter").addEventListener("input", function () {{
     def _v2_menu(self, parent, variable, values, command=None):
         """Create a styled drop-down menu connected to a Tkinter variable."""
         menu = tk.OptionMenu(parent, variable, *values, command=command)
-        menu.config(bg="#091d31", fg="#e6f2ff", activebackground="#164f96", activeforeground="white",
-                    relief=tk.FLAT, highlightthickness=1, highlightbackground="#27669c", anchor="w",
-                    font=("Segoe UI", 10), padx=9)
-        menu["menu"].config(bg="#091d31", fg="#e6f2ff", activebackground="#164f96")
+        menu.config(bg=self.PANEL2, fg=self.FG, activebackground=self.PANEL3, activeforeground=self.ACCENT,
+                    relief=tk.FLAT, highlightthickness=1, highlightbackground=self.BORDER, anchor="w",
+                    font=("Consolas", 9), padx=9)
+        menu["menu"].config(bg=self.PANEL2, fg=self.FG, activebackground=self.PANEL3,
+                            activeforeground=self.ACCENT, font=("Consolas", 9))
         return menu
 
     # -----------------------------------------------------------------------
