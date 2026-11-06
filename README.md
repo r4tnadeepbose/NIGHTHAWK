@@ -1,6 +1,6 @@
-# NIGHTHAWK 3.0.0
+# NIGHTHAWK 4.0.0
 
-A desktop Nmap scanner with a Version 3 security dashboard. NIGHTHAWK turns command-line network scanning into a point-and-click workflow — scan configuration, live output, risk assessment, service insights, and browser reports — with **zero Python package dependencies**.
+A desktop Nmap scanner with a Version 4 security dashboard. NIGHTHAWK turns command-line network scanning into a point-and-click workflow — scan configuration, live output, risk assessment, service insights, and browser reports — with **zero Python package dependencies**.
 
 > ⚠️ **Only scan hosts you own or have explicit permission to test.** Unauthorized scanning is illegal in most jurisdictions.
 
@@ -8,7 +8,7 @@ A desktop Nmap scanner with a Version 3 security dashboard. NIGHTHAWK turns comm
 
 ## Table of Contents
 
-- [What's New in Version 3](#whats-new-in-version-3)
+- [What's New in Version 4](#whats-new-in-version-4)
 - [Features](#features)
 - [Interface Tour](#interface-tour)
 - [How It Works](#how-it-works)
@@ -29,14 +29,14 @@ A desktop Nmap scanner with a Version 3 security dashboard. NIGHTHAWK turns comm
 
 ---
 
-## What's New in Version 3
+## What's New in Version 4
 
-Version 3 splits the single-file app into a maintainable package and rebuilds the dashboard interactions.
+Version 4 builds on the Version 3 package architecture with safer scan execution, richer multi-host reporting, and more reliable report cleanup.
 
 <p align="center">
   <img src="screenshots/nighthawk-overview-dark.png" alt="NIGHTHAWK 3 dashboard in the dark theme" width="900">
   <br>
-  <sub>Version 3 — button-style tabs, metric cards, risk legend, service mix, and recommendations.</sub>
+  <sub>Version 4 — button-style tabs, metric cards, risk legend, service mix, and recommendations.</sub>
 </p>
 
 | Area | What changed |
@@ -51,6 +51,9 @@ Version 3 splits the single-file app into a maintainable package and rebuilds th
 | **Live output** | Elapsed timer, auto-scroll toggle, copy log, and copy command |
 | **Export** | Format cards for HTML/JSON/CSV/TXT, recent reports, and folder shortcuts |
 | **Reports** | The standalone report gained a service mix, recommendations, and a scan-configuration panel |
+| **Reliability** | Temporary XML scan data is cleaned up on success and failure, report inputs are size-limited, and cleanup errors are surfaced |
+| **Multi-host reporting** | Reports now include host totals, port summaries, open-port counts, and script-finding counts |
+| **Validation** | Scan configuration, targets, ports, and custom flags are validated before execution; unsafe output overrides remain blocked |
 | **Dialogs** | Searchable cheatsheet, settings window, richer about window, and a checkbox host picker |
 | **Themes** | Blue-charcoal dark theme and a clean white-and-blue light theme, both switchable and remembered |
 
@@ -64,7 +67,7 @@ Version 3 splits the single-file app into a maintainable package and rebuilds th
 - **Timing templates** — `-T0` (Paranoid) through `-T5` (Insane).
 - **Detection options** — service/version (`-sV`) and OS fingerprinting (`-O`).
 - **NSE scripts** — default (`-sC`), vulnerability (`vuln`), HTTP enumeration (`http-enum`), SSL cipher audit (`ssl-enum-ciphers`).
-- **Output and routing options** — traceroute, `--open`, `-Pn`, `-n`, `-v`, and `--reason`.
+- **Output and routing options** — traceroute, open-port result handling, `-Pn`, `-n`, `-v`, and `--reason`.
 - **Custom flags** field for advanced users, with dangerous flags blocked.
 - **CIDR subnet sweep** — enter `192.168.1.0/24`, NIGHTHAWK discovers live hosts, then lets you pick which to scan.
 - **Presets** — Quick TCP · Intense Scan · Stealth SYN · Evade Firewall · Ping Sweep.
@@ -81,7 +84,7 @@ Version 3 splits the single-file app into a maintainable package and rebuilds th
 - Live MAC / OS lookup and an elapsed timer.
 - Auto-open HTML report toggle.
 - Preferences auto-save to `nighthawk_config.json`, including every option toggle.
-- Searchable Nmap cheatsheet, settings window, and version-3 about window.
+- Searchable Nmap cheatsheet, settings window, and Version 4 about window.
 
 <p align="center">
   <img src="screenshots/nighthawk-ports-dark.png" alt="NIGHTHAWK ports and services table" width="900">
@@ -415,6 +418,19 @@ reports/nighthawk_YYYYMMDD_HHMMSS_<id>.{html,json,csv,txt}
 
 The HTML file is **fully standalone** — CSS, JavaScript, and data are embedded, so you can email it or archive it without dependencies.
 
+### Optional static hosting
+
+NIGHTHAWK is a local desktop application and does not run on Vercel. Its standalone
+HTML reports can be hosted as static files, but scan reports may contain sensitive
+host, service, and vulnerability information. Publish only reports you have
+reviewed and are authorized to share:
+
+1. Copy the selected `.html` report and its matching `.json`, `.csv`, and `.txt`
+   files into a separate static-site project.
+2. Deploy that project with the Vercel CLI or a connected Vercel Git repository.
+3. Keep the desktop scanner and Nmap execution local; Vercel only serves the
+   finished static artifacts.
+
 ---
 
 ## Command-Line Usage
@@ -429,7 +445,7 @@ python -m nighthawk_app --version
 Example `--help` output:
 
 ```
-NIGHTHAWK 3.0.0 - Advanced Network Scanner
+NIGHTHAWK 4.0.0 - Advanced Network Scanner
 
 Usage: ./scanner.py [OPTIONS]
        python -m nighthawk_app [OPTIONS]

@@ -19,15 +19,24 @@ SERVICE_ADVICE = {
 }
 
 
+POSSIBLY_OPEN_STATES = {"open|filtered", "unfiltered"}
+
+
 def open_ports(records):
     """Return only records whose state is open."""
     return [record for record in records if record.get("state") == "open"]
 
 
+def possibly_open_ports(records):
+    """Return records Nmap could not fully classify (FIN/NULL/Xmas/UDP/ACK scans)."""
+    return [record for record in records if record.get("state") in POSSIBLY_OPEN_STATES]
+
+
 def all_scripts(records):
     """Flatten every NSE finding across the scan."""
     return [
-        {"port": record.get("port"), "protocol": record.get("protocol"), **script}
+        {"host": record.get("host"), "port": record.get("port"),
+         "protocol": record.get("protocol"), **script}
         for record in records for script in record.get("scripts", [])
     ]
 
@@ -41,11 +50,15 @@ def service_mix(records, limit=8):
 def recommendations(records, limit=6):
     """Turn open ports and findings into short, actionable notes."""
     current = open_ports(records)
+    possible = possibly_open_ports(records)
     ports = {record.get("port") for record in current}
     notes = [advice for port, advice in sorted(SERVICE_ADVICE.items()) if port in ports]
+    if possible:
+        notes.append(f"{len(possible)} port(s) reported open|filtered or unfiltered. "
+                     "A firewall may be dropping probes; confirm with a TCP connect scan (-sT).")
     if all_scripts(records):
         notes.append("Review the NSE findings on the Scripts tab before closing the assessment.")
-    if not current:
+    if not current and not possible:
         notes.append("No open ports were reported. Keep the host patched and re-check later.")
     if any(record.get("product") or record.get("version") for record in current):
         notes.append("Confirm that detected product versions are current and supported.")

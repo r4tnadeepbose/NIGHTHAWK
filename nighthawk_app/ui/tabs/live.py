@@ -58,7 +58,9 @@ class LiveMixin:
         """Append one line to the live log and color it by simple keywords."""
         self.output.config(state=tk.NORMAL)
         lowered = text.lower()
-        if "open" in lowered:
+        if "open|filtered" in lowered or "closed|filtered" in lowered or "unfiltered" in lowered:
+            tag = ("closed",)
+        elif "open" in lowered:
             tag = ("open",)
         elif "closed" in lowered or "filtered" in lowered:
             tag = ("closed",)

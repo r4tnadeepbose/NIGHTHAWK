@@ -1,11 +1,12 @@
 """Risk scoring shared by the desktop gauge and the HTML report."""
 
-from .insights import all_scripts, open_ports
+from .insights import all_scripts, open_ports, possibly_open_ports
 
 
 def assess(records):
     """Return a single severity decision for a result set."""
     current = open_ports(records)
+    possible = possibly_open_ports(records)
     scripts = all_scripts(records)
     script_text = " ".join(str(script.get("output", "")) for script in scripts).casefold()
 
@@ -21,6 +22,10 @@ def assess(records):
     if current:
         return {"label": "EXPOSED", "severity": "exposed", "css": "risk-exposed",
                 "detail": "Open services were detected."}
+    if possible:
+        return {"label": "EXPOSED", "severity": "exposed", "css": "risk-exposed",
+                "detail": "Potentially open ports detected (open|filtered). "
+                          "Confirm with a TCP connect scan."}
     return {"label": "CLEAR", "severity": "clear", "css": "risk-clear",
             "detail": "No open services or script findings."}
 

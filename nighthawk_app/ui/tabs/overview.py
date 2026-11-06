@@ -2,7 +2,7 @@
 
 import tkinter as tk
 
-from ...reports.insights import all_scripts, open_ports, recommendations, service_mix
+from ...reports.insights import all_scripts, open_ports, possibly_open_ports, recommendations, service_mix
 from ..widgets import Panel, clear_children
 
 RISK_LEVELS = (
@@ -119,8 +119,10 @@ class OverviewMixin:
         self._risk_severity = assessment["severity"]
         self.risk_label.set(assessment["label"].replace(" ", "\n"))
         self.draw_risk(assessment["color"])
+        possible = possibly_open_ports(records)
+        possible_text = f" · {len(possible)} possibly open" if possible else ""
         self.risk_detail_var.set(
-            f"{assessment['detail']}\n{len(current)} open port(s) · {len(scripts)} script finding(s)"
+            f"{assessment['detail']}\n{len(current)} open port(s){possible_text} · {len(scripts)} script finding(s)"
         )
         for label, chip in self.risk_legend.items():
             active = label == assessment["label"].split()[0]

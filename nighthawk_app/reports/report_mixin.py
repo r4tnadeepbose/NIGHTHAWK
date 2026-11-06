@@ -12,12 +12,12 @@ from .html import render_report
 from .risk import SEVERITY_ROLES, assess
 from .. import __version__
 from ..paths import REPORTS_DIR
-from ..scanning.options import SCAN_TYPES, TIMING_TEMPLATES
+from ..scanning.options import MAX_REPORT_XML_BYTES, SCAN_TYPES, TIMING_TEMPLATES
 from ..scanning.parser import parse_nmap_xml
 
 FLAG_LABELS = {
     "service": "-sV", "os": "-O", "traceroute": "--traceroute",
-    "open_only": "--open", "skip_ping": "-Pn", "verbose": "-v", "reasons": "--reason",
+    "skip_ping": "-Pn", "verbose": "-v", "reasons": "--reason",
 }
 SCRIPT_LABELS = {
     "nse_default": "-sC", "nse_vuln": "vuln", "nse_http": "http-enum", "nse_ssl": "ssl-enum-ciphers",
@@ -32,11 +32,14 @@ class ReportMixin:
         try:
             if self.current_xml_path is None:
                 raise OSError("No report data path was created")
+            if self.current_xml_path.stat().st_size > MAX_REPORT_XML_BYTES:
+                raise ValueError("Scan XML exceeds the 25 MB report limit")
             parsed = parse_nmap_xml(self.current_xml_path, host)
             self._finalize_reports(
                 parsed["records"], host, ports, parsed["info"], parsed["features"], parsed["meta"]
             )
         except Exception as error:
+            self._discard_current_xml()
             self.update_ui(self.log, f"[ERROR] Could not parse scan data: {error}")
             self.update_ui(self.finish_scan, "REPORT ERROR")
 
@@ -56,6 +59,12 @@ class ReportMixin:
                 "nighthawk_version": __version__,
                 "nmap_version": meta.get("nmap_version", "Unknown"),
                 "started": meta.get("started", ""),
+                "hosts_up": meta.get("hosts_up", 1),
+                "hosts_scanned": meta.get("hosts_scanned", meta.get("hosts_up", 1)),
+                "ports_total": meta.get("ports_total", len(records)),
+                "port_summary": meta.get("port_summary", []),
+                "open_ports": sum(1 for record in records if record.get("state") == "open"),
+                "script_findings": sum(len(record.get("scripts", [])) for record in records),
                 "duration": str(datetime.timedelta(seconds=int(elapsed))),
                 "command": self.last_command or self.command_var.get(),
                 "options": self.enabled_options(),
@@ -68,10 +77,6 @@ class ReportMixin:
             )
             self.last_report = base.with_suffix(".html")
 
-            if self.current_xml_path is not None:
-                self.current_xml_path.unlink(missing_ok=True)
-                self.current_xml_path = None
-
             self.update_ui(self.log, f"[+] Reports saved: {base}.html / .json / .csv / .txt")
             self.update_ui(self.refresh_dashboard, data)
             self.update_ui(self.finish_scan, "COMPLETE")
@@ -80,6 +85,19 @@ class ReportMixin:
         except Exception as error:
             self.update_ui(self.log, f"[ERROR] Could not create report: {error}")
             self.update_ui(self.finish_scan, "REPORT ERROR")
+        finally:
+            self._discard_current_xml()
+
+    def _discard_current_xml(self):
+        """Remove the temporary scan XML without masking the report error."""
+        path = self.current_xml_path
+        self.current_xml_path = None
+        if path is None:
+            return
+        try:
+            path.unlink(missing_ok=True)
+        except OSError as error:
+            self.update_ui(self.log, f"[ERROR] Could not remove temporary scan data: {error}")
 
     def enabled_options(self):
         """Return the active scan flags for display in reports."""
@@ -156,6 +174,7 @@ class ReportMixin:
 
     def elapsed_seconds(self):
         """Seconds since the current scan started."""
-        if not hasattr(self, "scan_started_at"):
+        started = getattr(self, "scan_started_at", None)
+        if started is None:
             return 0
-        return max(0, int((datetime.datetime.now() - self.scan_started_at).total_seconds()))
+        return max(0, int((datetime.datetime.now() - started).total_seconds()))

@@ -1,6 +1,6 @@
 """NIGHTHAWK — Advanced Network Scanner."""
 
-__version__ = "3.0.0"
-VERSION_LABEL = "VERSION 3"
+__version__ = "4.0.0"
+VERSION_LABEL = "VERSION 4"
 APP_NAME = "NIGHTHAWK"
 TAGLINE = "ADVANCED NETWORK SCANNER"

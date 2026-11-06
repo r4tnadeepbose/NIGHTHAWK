@@ -1,5 +1,8 @@
 """Scan profiles, option metadata, validation, and Nmap command building."""
 
+import ipaddress
+import re
+
 MAX_TARGET_LENGTH = 253
 MAX_PORT_EXPRESSION_LENGTH = 256
 MAX_CUSTOM_FLAGS_LENGTH = 2048
@@ -67,7 +70,7 @@ CHECK_GROUPS = (
     )),
     ("DISCOVERY & OUTPUT", (
         ("traceroute", "Traceroute", "Map the path with --traceroute", False),
-        ("open_only", "Open ports only", "Hide closed ports with --open", False),
+        ("open_only", "Open ports only", "Keep complete XML results for reporting", False),
         ("skip_ping", "Skip host discovery", "Treat the host as up with -Pn", False),
         ("resolve_dns", "Resolve DNS names", "Turn off to use -n", True),
         ("verbose", "Verbose output", "Stream extra detail with -v", False),
@@ -84,6 +87,22 @@ EVASION_TYPES = {
     "Source Port Spoof (-g 53)",
 }
 NON_STANDARD_TYPES = {"Ping Discovery (-sn)", "IP Protocol (-sO)"}
+
+
+def split_targets(text):
+    """Split a comma/space separated target expression into Nmap argv entries."""
+    return [token for token in re.split(r"[,\s]+", text.strip()) if token]
+
+
+def is_cidr_target(text):
+    """Return whether text is one valid IPv4 or IPv6 network expression."""
+    if not text or len(split_targets(text)) != 1 or "/" not in text:
+        return False
+    try:
+        ipaddress.ip_network(text.strip(), strict=False)
+    except ValueError:
+        return False
+    return True
 
 
 def valid_ports(expression):
@@ -166,8 +185,6 @@ def build_command(engine, *, scan_type, timing, ports, flags_text, check_state,
             command.extend(["--script", "ssl-enum-ciphers"])
         if check_state.get("traceroute") and standard:
             command.append("--traceroute")
-        if check_state.get("open_only"):
-            command.append("--open")
         if check_state.get("skip_ping"):
             command.append("-Pn")
         if not check_state.get("resolve_dns", True):
@@ -184,5 +201,8 @@ def build_command(engine, *, scan_type, timing, ports, flags_text, check_state,
         else:
             command.extend(["-p", ports])
 
-    command.extend(["-oX", str(xml_path), target])
+    targets = split_targets(target)
+    if not targets:
+        raise ValueError("target is required")
+    command.extend(["-oX", str(xml_path), *targets])
     return command

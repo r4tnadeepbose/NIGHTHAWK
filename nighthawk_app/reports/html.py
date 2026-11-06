@@ -12,6 +12,7 @@ from ..paths import report_logo_href
 def render_report(data, base, palettes, version=__version__):
     """Return a complete standalone HTML document for one scan."""
     records = data.get("results", [])
+    port_summary = data.get("port_summary", [])
     info = data.get("info", {})
     current = open_ports(records)
     scripts = all_scripts(records)
@@ -21,23 +22,35 @@ def render_report(data, base, palettes, version=__version__):
     rows = []
     for record in records:
         state = html.escape(str(record.get("state", "")))
+        state_class = "state-open" if state == "open" else "state-other"
         rows.append(
-            "<tr><td class='mono'>{}</td><td class='{}'>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(
+            "<tr><td>{}</td><td class='mono'>{}</td><td class='{}'>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(
+                html.escape(str(record.get("host", "") or "—")),
                 html.escape(f"{record.get('port', '')}/{record.get('protocol', '')}"),
-                "state-open" if state == "open" else "state-other", state,
+                state_class, state,
                 html.escape(str(record.get("service", "") or "—")),
                 html.escape(version_label(record)),
                 html.escape(str(record.get("reason", "") or "—")),
             )
         )
     if not rows:
-        rows.append("<tr><td colspan='5' class='empty'>No port results were returned.</td></tr>")
+        rows.append("<tr><td colspan='6' class='empty'>No individual port results were returned.</td></tr>")
+    summary_rows = "".join(
+        "<tr><td>{}</td><td class='mono'>{} ports</td><td class='state-other'>{}</td>"
+        "<td colspan='2'>Grouped by Nmap</td><td>{}</td></tr>".format(
+            html.escape(str(item.get("host", "—"))),
+            item.get("count", 0),
+            html.escape(str(item.get("state", "unknown"))),
+            html.escape(str(item.get("reason", "") or "—")),
+        )
+        for item in port_summary
+    )
 
     script_blocks = []
     for entry in scripts:
         script_blocks.append(
             "<article class='script'><header>{}</header><pre>{}</pre></article>".format(
-                html.escape(f"{entry['port']}/{entry['protocol']}  •  {entry['id']}"),
+                html.escape(f"{entry.get('host') or ''} {entry['port']}/{entry['protocol']}  •  {entry['id']}"),
                 html.escape(str(entry.get("output", ""))),
             )
         )
@@ -94,7 +107,7 @@ body {{ margin:0; background:var(--bg); color:var(--text); font:14px/1.55 "Segoe
 main {{ max-width:1480px; margin:0 auto; padding:30px 24px 44px; }}
 h1 {{ margin:0; font:700 24px/1.2 "Consolas",ui-monospace,monospace; letter-spacing:.02em; }}
 .sub {{ margin:8px 0 24px; color:var(--muted); font-size:13px; }} .sub strong {{ color:var(--text); font-weight:600; }}
-.summary {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px; }}
+.summary {{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; margin-bottom:14px; }}
 .card, .panel {{ background:var(--panel); border:1px solid var(--line); }}
 .card {{ padding:13px 15px; }}
 .card span {{ display:block; color:var(--muted); font:700 10px "Consolas",ui-monospace,monospace; letter-spacing:.12em; text-transform:uppercase; }}
@@ -133,6 +146,7 @@ tbody tr:hover td {{ background:var(--panel-2); }}
 pre {{ margin:0; padding:13px; overflow:auto; white-space:pre-wrap; color:var(--text); font:12px/1.5 "Consolas",ui-monospace,monospace; }}
 .empty {{ margin:0; padding:20px 15px; color:var(--muted); text-align:center; font-size:13px; }}
 footer {{ max-width:1480px; margin:0 auto; padding:0 24px 28px; color:var(--muted); font:10px "Consolas",ui-monospace,monospace; letter-spacing:.1em; text-transform:uppercase; }}
+@media (max-width:1100px) {{ .summary {{ grid-template-columns:repeat(3,minmax(0,1fr)); }} }}
 @media (max-width:900px) {{ main {{ padding:20px 14px 32px; }} .summary {{ grid-template-columns:1fr 1fr; }} .grid {{ display:block; }} .grid > .panel {{ margin-bottom:14px; }} .meta {{ grid-template-columns:120px 1fr; }} input#filter {{ width:100%; margin-left:0; min-width:0; }} footer {{ padding:0 14px 22px; }} }}
 """
 
@@ -143,7 +157,7 @@ footer {{ max-width:1480px; margin:0 auto; padding:0 24px 28px; color:var(--mute
     )
 
     report_js = (
-        "<script>\nconst reportData = {json:" + json.dumps(data)
+        "<script>\nconst reportData = {json:" + json.dumps(data).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
         + ",csv:" + json.dumps(base.with_suffix(".csv").read_text(encoding="utf-8"))
         + ",txt:" + json.dumps(base.with_suffix(".txt").read_text(encoding="utf-8"))
         + "};\n"
@@ -180,10 +194,11 @@ footer {{ max-width:1480px; margin:0 auto; padding:0 24px 28px; color:var(--mute
   </div>
 
   <section class="summary" aria-label="Scan summary">
-    <div class="card good"><span>Hosts up</span><strong>1</strong></div>
-    <div class="card"><span>Open ports</span><strong>{len(current)}</strong></div>
-    <div class="card {'bad' if assessment['severity'] in ('critical', 'high') else ''}"><span>Script findings</span><strong>{len(scripts)}</strong></div>
-    <div class="card"><span>Ports scanned</span><strong>{html.escape(str(data.get('ports', '—')))}</strong></div>
+    <div class="card good"><span>Hosts up</span><strong>{data.get('hosts_up', 1)}</strong></div>
+    <div class="card"><span>Hosts scanned</span><strong>{data.get('hosts_scanned', data.get('hosts_up', 1))}</strong></div>
+    <div class="card"><span>Open ports</span><strong>{data.get('open_ports', len(current))}</strong></div>
+    <div class="card {'bad' if assessment['severity'] in ('critical', 'high') else ''}"><span>Script findings</span><strong>{data.get('script_findings', len(scripts))}</strong></div>
+    <div class="card"><span>Total port records</span><strong>{data.get('ports_total', len(records))}</strong></div>
   </section>
 
   <section class="grid">
@@ -217,8 +232,8 @@ footer {{ max-width:1480px; margin:0 auto; padding:0 24px 28px; color:var(--mute
     </div>
     <div class="table-wrap">
       <table id="results">
-        <thead><tr><th>Port</th><th>State</th><th>Service</th><th>Version</th><th>Reason</th></tr></thead>
-        <tbody>{''.join(rows)}</tbody>
+        <thead><tr><th>Host</th><th>Port</th><th>State</th><th>Service</th><th>Version</th><th>Reason</th></tr></thead>
+        <tbody>{''.join(rows)}{summary_rows}</tbody>
       </table>
     </div>
   </section>

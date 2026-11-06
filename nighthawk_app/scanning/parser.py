@@ -7,6 +7,7 @@ def parse_nmap_xml(xml_path, host):
     """Return records, host metadata, feature flags, and scan facts."""
     root = ET.parse(xml_path).getroot()
     records = []
+    port_summary = []
     features = {
         "os": False, "mac": False, "uptime": False, "distance": False,
         "service_info": False, "version": False, "scripts": False,
@@ -16,11 +17,24 @@ def parse_nmap_xml(xml_path, host):
         "uptime": "Unknown", "distance": "Unknown", "service_info": "Unknown",
     }
 
+    hosts_up = 0
     for host_node in root.findall("host"):
-        for address in host_node.findall("address"):
-            if address.get("addrtype") == "mac":
-                info["mac"] = address.get("addr", "Unknown")
-                info["vendor"] = address.get("vendor", "Unknown")
+        status = host_node.find("status")
+        if status is None or status.get("state") == "up":
+            hosts_up += 1
+        address = host_node.find("address[@addrtype='ipv4']")
+        if address is None:
+            address = host_node.find("address[@addrtype='ipv6']")
+        if address is None:
+            address = host_node.find("address")
+        hostname = host_node.find("hostnames/host[@name]")
+        host_label = (hostname.get("name") if hostname is not None else None) \
+            or (address.get("addr") if address is not None else None) or host
+
+        for address_node in host_node.findall("address"):
+            if address_node.get("addrtype") == "mac":
+                info["mac"] = address_node.get("addr", "Unknown")
+                info["vendor"] = address_node.get("vendor", "Unknown")
                 features["mac"] = True
 
         os_node = host_node.find("os")
@@ -66,7 +80,7 @@ def parse_nmap_xml(xml_path, host):
                 features["version"] = True
 
             records.append({
-                "host": host,
+                "host": host_label,
                 "protocol": port_node.get("protocol", ""),
                 "port": int(port_node.get("portid", 0)),
                 "state": state.get("state", ""),
@@ -77,6 +91,18 @@ def parse_nmap_xml(xml_path, host):
                 "extrainfo": service.get("extrainfo", "") if service is not None else "",
                 "scripts": scripts,
             })
+        for extra_node in host_node.findall("./ports/extraports"):
+            state = extra_node.get("state", "unknown")
+            count = _int_attr(extra_node, "count")
+            if count:
+                reason_node = extra_node.find("extrareasons")
+                reason = reason_node.get("reason", "") if reason_node is not None else ""
+                port_summary.append({
+                    "host": host_label,
+                    "state": state,
+                    "count": count,
+                    "reason": reason,
+                })
 
     started = _int_attr(root, "start")
     finished_node = root.find("runstats/finished")
@@ -87,6 +113,10 @@ def parse_nmap_xml(xml_path, host):
         "nmap_version": root.get("version", "Unknown"),
         "started": root.get("startstr", ""),
         "elapsed": max(0, finished - started) if started else 0,
+        "hosts_up": hosts_up,
+        "hosts_scanned": len(root.findall("host")),
+        "ports_total": len(records) + sum(item["count"] for item in port_summary),
+        "port_summary": port_summary,
     }
     return {"records": records, "info": info, "features": features, "meta": meta}
 

@@ -3,13 +3,13 @@
 import tkinter as tk
 from tkinter import ttk
 
-from ...reports.insights import open_ports, version_label
+from ...reports.insights import open_ports, possibly_open_ports, version_label
 
 
 class PortsMixin:
     """Build and refresh the port results table."""
 
-    STATES = ("All states", "Open", "Filtered", "Closed")
+    STATES = ("All states", "Open", "Open|filtered", "Filtered", "Closed")
 
     def build_ports(self, tab):
         self.port_records = []
@@ -37,12 +37,12 @@ class PortsMixin:
         tk.Label(tab, textvariable=self.port_counts_var, bg=self.BG, fg=self.MUTED,
                  font=("Consolas", 8), anchor="w").pack(fill=tk.X, padx=14, pady=(0, 4))
 
-        columns = ("port", "state", "service", "version", "reason")
+        columns = ("host", "port", "state", "service", "version", "reason")
         self.port_table = ttk.Treeview(tab, columns=columns, show="headings",
                                        style="Nighthawk.Treeview", selectmode="browse")
-        for name, title, width in (("port", "PORT", 110), ("state", "STATE", 100),
-                                   ("service", "SERVICE", 150), ("version", "VERSION", 380),
-                                   ("reason", "REASON", 160)):
+        for name, title, width in (("host", "HOST", 150), ("port", "PORT", 100),
+                                   ("state", "STATE", 110), ("service", "SERVICE", 140),
+                                   ("version", "VERSION", 300), ("reason", "REASON", 140)):
             self.port_table.heading(name, text=title, command=lambda key=name: self.sort_ports(key))
             self.port_table.column(name, width=width, anchor="w")
         self.port_table.pack(fill=tk.BOTH, expand=True, padx=8, pady=(0, 8))
@@ -71,7 +71,7 @@ class PortsMixin:
         self._apply_port_filters()
 
     def _update_port_headings(self):
-        titles = {"port": "PORT", "state": "STATE", "service": "SERVICE",
+        titles = {"host": "HOST", "port": "PORT", "state": "STATE", "service": "SERVICE",
                   "version": "VERSION", "reason": "REASON"}
         arrow = "▼" if self._port_sort_reverse else "▲"
         for key, title in titles.items():
@@ -88,7 +88,7 @@ class PortsMixin:
         for record in self.port_records:
             state = record.get("state", "")
             haystack = " ".join(str(record.get(key, "")) for key in
-                                ("port", "protocol", "state", "service", "reason",
+                                ("host", "port", "protocol", "state", "service", "reason",
                                  "product", "version", "extrainfo")).lower()
             if query and query not in haystack:
                 continue
@@ -111,22 +111,32 @@ class PortsMixin:
             self.port_table.delete(item)
         for record in rows:
             state = record.get("state", "")
+            if state == "open":
+                tag = "open"
+            elif state in ("filtered", "open|filtered", "closed|filtered", "unfiltered"):
+                tag = "filtered"
+            else:
+                tag = "closed"
             self.port_table.insert(
                 "", tk.END,
-                values=(f"{record.get('port')}/{record.get('protocol')}", state,
+                values=(record.get("host") or "—",
+                        f"{record.get('port')}/{record.get('protocol')}", state,
                         record.get("service") or "—", version_label(record),
                         record.get("reason") or "—"),
-                tags=("open" if state == "open" else "filtered" if state == "filtered" else "closed",),
+                tags=(tag,),
             )
 
         open_count = len(open_ports(self.port_records))
+        possible_count = len(possibly_open_ports(self.port_records))
         services = len({record.get("service") for record in self.port_records
                         if record.get("state") == "open" and record.get("service")})
+        possible_text = f" · {possible_count} possibly open" if possible_count else ""
         self.port_counts_var.set(
-            f"{open_count} open · {services} service(s) · showing {len(rows)} of {len(self.port_records)} rows"
+            f"{open_count} open{possible_text} · {services} service(s) · "
+            f"showing {len(rows)} of {len(self.port_records)} rows"
         )
         if not rows:
-            self.port_table.insert("", tk.END, values=("—", "no matches", "—", "—", "adjust the filter"))
+            self.port_table.insert("", tk.END, values=("—", "—", "no matches", "—", "—", "adjust the filter"))
 
     def copy_selected_port(self):
         """Copy the selected row (or the whole result set) to the clipboard."""
@@ -138,7 +148,7 @@ class PortsMixin:
             lines = []
             for record in self.port_records:
                 if record.get("state") == "open":
-                    lines.append(f"{record.get('port')}/{record.get('protocol')} "
+                    lines.append(f"{record.get('host')} {record.get('port')}/{record.get('protocol')} "
                                  f"{record.get('service')} {version_label(record)}".strip())
             text = "\n".join(lines)
         if not text:

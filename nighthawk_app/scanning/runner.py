@@ -11,7 +11,7 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox
 
-from .options import build_command, valid_ports
+from .options import build_command, is_cidr_target, split_targets, valid_ports
 
 
 class ScanMixin:
@@ -49,7 +49,7 @@ class ScanMixin:
         if engine is None:
             messagebox.showerror("NIGHTHAWK", "Nmap not found. Install it and add it to PATH.")
             return
-        if "/" in host:
+        if is_cidr_target(host):
             self.run_subnet_sweep(host, engine)
             return
         if not valid_ports(ports) and ports != "N/A":
@@ -131,9 +131,14 @@ class ScanMixin:
 
     def run_subnet_sweep(self, subnet, engine):
         """Discover live hosts on a CIDR range before offering them for scanning."""
+        command = [engine, "-sn", "-T4", *split_targets(subnet)]
+        self.scan_started_at = datetime.datetime.now()
+        self.last_command = self.display_command(command)
+        self.command_var.set(self.last_command)
         self.clear_output()
         self.is_scanning = True
         self.start_btn.config(state=tk.DISABLED)
+        self.stop_btn.config(state=tk.NORMAL)
         self.set_status("DISCOVERING", self.WARN)
         self.show_progress()
         self.start_elapsed()
@@ -141,13 +146,24 @@ class ScanMixin:
         self.update_ui(self.log, f"[*] Running ping sweep on {subnet}...")
 
         def sweep():
-            command = [engine, "-sn", "-T4", subnet]
             try:
                 flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
-                proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                        text=True, creationflags=flags)
-                output, _ = proc.communicate()
-                ips = re.findall(r"Nmap scan report for (?:[^\s]+\s)?\(?([0-9\.]+)\)?", output)
+                self.scan_process = subprocess.Popen(
+                    command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                    text=True, encoding="utf-8", errors="replace", creationflags=flags)
+                output, _ = self.scan_process.communicate()
+                code = self.scan_process.returncode
+                self.scan_process = None
+                if not self.is_scanning:
+                    return
+                if code != 0:
+                    self.update_ui(self.log, f"[ERROR] Host discovery failed (exit code {code}).")
+                    self.update_ui(self.finish_scan, f"EXIT CODE {code}")
+                    return
+                ips = list(dict.fromkeys(re.findall(
+                    r"Nmap scan report for (?:[^\s]+\s)?\(?([0-9A-Fa-f:.]+)\)?",
+                    output,
+                )))
                 if not ips:
                     self.update_ui(self.log, "[-] No live hosts found.")
                     self.update_ui(self.finish_scan, "NO HOSTS")
@@ -155,6 +171,9 @@ class ScanMixin:
                 self.update_ui(self.log, f"[+] Found {len(ips)} live hosts.")
                 self.update_ui(self.show_subnet_results, ips)
             except (OSError, ValueError) as error:
+                self.scan_process = None
+                if not self.is_scanning:
+                    return
                 self.update_ui(self.log, f"[ERROR] {error}")
                 self.update_ui(self.finish_scan, "ERROR")
 
@@ -172,6 +191,8 @@ class ScanMixin:
 
     def stop_scan(self):
         """Ask Nmap to stop and restore the idle UI."""
+        if not self.is_scanning:
+            return
         self.is_scanning = False
         if self.scan_process is not None and self.scan_process.poll() is None:
             self.scan_process.terminate()

@@ -197,7 +197,7 @@ class NighthawkApp(
         self.report_target_var.set(
             f"Target: {data.get('target', 'Unknown')}   ·   Ports: {data.get('ports', '—')}"
         )
-        self.host_count_var.set("1")
+        self.host_count_var.set(str(data.get("hosts_up", 1)))
         self.open_ports_var.set(str(len(current)))
         self.findings_var.set(str(findings))
         self.duration_var.set(data.get("duration", "—"))

@@ -207,28 +207,31 @@ class DialogMixin:
                 note.set("Select exactly two reports to compare.")
                 return
             try:
-                older, newer = (json.loads(path.read_text(encoding="utf-8")) for path in chosen)
-                old_ports = {(item.get("protocol"), item.get("port")): item
+                payloads = sorted((json.loads(path.read_text(encoding="utf-8")) for path in chosen),
+                                  key=lambda payload: payload.get("created", ""))
+                older, newer = payloads
+                old_ports = {(item.get("host"), item.get("protocol"), item.get("port")): item
                              for item in older.get("results", []) if item.get("state") == "open"}
-                new_ports = {(item.get("protocol"), item.get("port")): item
+                new_ports = {(item.get("host"), item.get("protocol"), item.get("port")): item
                              for item in newer.get("results", []) if item.get("state") == "open"}
                 added = sorted(set(new_ports) - set(old_ports))
                 removed = sorted(set(old_ports) - set(new_ports))
                 diff.config(state=tk.NORMAL)
                 diff.delete("1.0", tk.END)
                 diff.insert(tk.END, "REPORT COMPARISON\n", "heading")
-                diff.insert(tk.END, f"Older: {older.get('target', '—')}  |  Newer: {newer.get('target', '—')}\n\n", "muted")
+                diff.insert(tk.END, f"Older: {older.get('created', '—')[:16].replace('T', ' ')} {older.get('target', '—')}  |  "
+                                    f"Newer: {newer.get('created', '—')[:16].replace('T', ' ')} {newer.get('target', '—')}\n\n", "muted")
                 if added:
                     diff.insert(tk.END, "NEWLY OPEN PORTS\n", "heading")
-                    for protocol, port in added:
-                        record = new_ports[(protocol, port)]
-                        diff.insert(tk.END, f"+ {port}/{protocol}  {record.get('service', 'unknown')}\n", "added")
+                    for host, protocol, port in added:
+                        record = new_ports[(host, protocol, port)]
+                        diff.insert(tk.END, f"+ {host} {port}/{protocol}  {record.get('service', 'unknown')}\n", "added")
                     diff.insert(tk.END, "\n")
                 if removed:
                     diff.insert(tk.END, "NO LONGER OPEN\n", "heading")
-                    for protocol, port in removed:
-                        record = old_ports[(protocol, port)]
-                        diff.insert(tk.END, f"- {port}/{protocol}  {record.get('service', 'unknown')}\n", "removed")
+                    for host, protocol, port in removed:
+                        record = old_ports[(host, protocol, port)]
+                        diff.insert(tk.END, f"- {host} {port}/{protocol}  {record.get('service', 'unknown')}\n", "removed")
                 if not added and not removed:
                     diff.insert(tk.END, "No open-port changes were found.", "muted")
                 diff.config(state=tk.DISABLED)

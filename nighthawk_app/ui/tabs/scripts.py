@@ -93,7 +93,8 @@ class ScriptsMixin:
             finding = self.script_findings[int(selection[0])]
         except (ValueError, IndexError):
             return
-        self._set_script_detail(f"[{finding['id']}]  {finding['port']}/{finding['protocol']}\n\n"
+        self._set_script_detail(f"[{finding['id']}]  {finding.get('host') or ''} "
+                                f"{finding['port']}/{finding['protocol']}\n\n"
                                 f"{finding.get('output', '')}")
 
     def _set_script_detail(self, text):
